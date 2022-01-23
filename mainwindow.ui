@@ -33,7 +33,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>SpeedyCodes' Ultimate RenderBender</string>
+   <string>RenderBender</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -359,14 +359,38 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionSelect_new_settings_JSON_file"/>
+    <addaction name="actionPreferences"/>
     <addaction name="actionExit"/>
    </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionReread_all_setting_values"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuView"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionPreferences">
+   <property name="text">
+    <string>Preferences</string>
+   </property>
+  </action>
+  <action name="actionReread_all_setting_values">
+   <property name="text">
+    <string>Reread all setting values</string>
+   </property>
+  </action>
+  <action name="actionSelect_new_settings_JSON_file">
+   <property name="text">
+    <string>Select new settings JSON file</string>
    </property>
   </action>
  </widget>

@@ -29,6 +29,9 @@
 #include <QStandardPaths>
 #include <Windows.h>
 #include <sstream>
+#include <metasettings.h>
+#include <utils.h>
+#include <QMessageBox>
 
 enum class settingType { INT, FLOAT, BOOL};
 HANDLE readPrep();
@@ -36,15 +39,21 @@ class setting {
 public:
     char *displayName;
     //char *shortName;
+    uintptr_t* base;
     uintptr_t addr;
+    int offset;
     char *group;
     int index;
     //char *description;
     float defaultValue;
     float minVal;
     float maxVal;
+    QWidget* widget;
     settingType type;
     //int precision;
+    void updateAddr(){
+        addr = *base + offset;
+    }
     void read(int &resultVar){
         ReadProcessMemory(readPrep(), (BYTE*)addr, &resultVar, sizeof(resultVar), nullptr);
     }
@@ -55,20 +64,18 @@ public:
         ReadProcessMemory(readPrep(), (BYTE*)addr, &resultVar, sizeof(resultVar), nullptr);
     }
     //https://stackoverflow.com/questions/351845/finding-the-type-of-an-object-in-c
-    setting(uintptr_t baseAddr, QString offset, char *name, char *groupName, float defaultVal, float min, float max, float i, settingType varType){
+    setting(uintptr_t &baseAddr, QString offsetString, char *name, char *groupName, float defaultVal, float min, float max, float i, settingType varType, QWidget* w){
         displayName = name;
-        QByteArray b = offset.toLocal8Bit();
-        unsigned int x;
-        std::stringstream ss;
-        ss << std::hex << b.constData();
-        ss >> x;
-        addr = baseAddr + static_cast<int>(x);
+        offset = utils::hexToDec(offsetString);
+        base = &baseAddr;
+        updateAddr();
         group = groupName;
         index = i;
         type = varType;
         defaultValue = defaultVal;
         minVal = min;
         maxVal = max;
+        widget = w;
     }
 
 };
@@ -82,15 +89,24 @@ void readSetting(uintptr_t settingAddr, float &resultVar);
 void readSetting(uintptr_t settingAddr, int &resultVar);
 void readSetting(uintptr_t settingAddr, bool &resultVar);
 using namespace std;
-#include <vector>
 QJsonObject json;
-uintptr_t sunAzimuthAddress;
+uintptr_t sunAzimuthAddress = 0;
 vector<setting> settings;
+uintptr_t staticOffset;
+bool UIGenerated = false;
+QString settingsJsonPath = "";
+bool changingUIvalues = false;
 
 MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     connect(ui->selectJsonBtn, SIGNAL(clicked()), this, SLOT(selectJson()));
+    readPreferences();
+    if(settingsJsonPath != "") {
+        readJson(settingsJsonPath);
+        GenerateUI();
+        UIGenerated = true;
+    }
 }
 
 MainWindow::~MainWindow()
@@ -102,22 +118,37 @@ void MainWindow::onValueChanged() {
     delete button;
 }
 void MainWindow::selectJson(){
+    QString path = QFileDialog::getOpenFileName(this,tr("Open JSON"),  QStandardPaths::standardLocations(QStandardPaths::DownloadLocation).constFirst(), tr("JSON Files (*.json)"));
+    if(path == ""){return;}
+    utils::writeConfigProperty("settingsJSONpath", path);
+    if(UIGenerated){
+        QMessageBox msgBox;
+        msgBox.setText("The new setting file's location has been saved. Please restart RenderBender now for the changes to take effect.");
+        msgBox.exec();
+    }else{
+        readJson(path);
+        GenerateUI();
+        UIGenerated = true;
+    }
+}
+void MainWindow::readJson(QString path){
     QFile file;
-    file.setFileName(QFileDialog::getOpenFileName(this,tr("Open JSON"),  QStandardPaths::standardLocations(QStandardPaths::DownloadLocation).constFirst(), tr("JSON Files (*.json)")));
+    file.setFileName(path);
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QString rawText = file.readAll();
     file.close();
     QJsonDocument document = QJsonDocument::fromJson(rawText.toUtf8());
     json = document.object();
-    sunAzimuthAddress = getBaseWorkingAddress(0x04191C40);
-    GenerateUI();
 }
+
 void MainWindow::onSettingValueChanged(double i){
+    if(changingUIvalues)return;
     int index = sender()->objectName().replace("settingUIelement", "").toInt();
     changeSetting(static_cast<float>(i), settings[index].addr);
 
 }
 void MainWindow::onSettingValueChanged(int i){
+    if(changingUIvalues)return;
     int index = sender()->objectName().replace("settingUIelement", "").toInt();
     if(settings[index].type == settingType::BOOL){
         changeSetting(i==1, settings[index].addr);
@@ -131,6 +162,7 @@ void MainWindow::GenerateUI(){
     int layoutCounter = 0;
     QList<QVBoxLayout *> layouts = centralWidget()->findChildren<QVBoxLayout *>();
     QStringList groupNames;
+    changingUIvalues = true;
     for (int i = 0; i < settingsJson.count(); i++) {
         //https://doc.qt.io/qt-5/qtabwidget.html#addTab
         QJsonObject obj = settingsJson[i].toObject();
@@ -152,7 +184,7 @@ void MainWindow::GenerateUI(){
             int val;
             setting s(sunAzimuthAddress, obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
             groupName.toLocal8Bit().data(), obj.value(QString("default")).toInt(), obj.value(QString("min")).toInt(),
-            obj.value(QString("max")).toInt(), i,  settingType::FLOAT);
+            obj.value(QString("max")).toInt(), i,  settingType::INT, spinBox);
             settings.push_back(s);
             s.read(val);
             layouts[layoutCounter]->insertWidget(1, spinBox);
@@ -165,9 +197,10 @@ void MainWindow::GenerateUI(){
             QLabel* label = new QLabel(infoText);
             layouts[layoutCounter]->insertWidget(0, label);
             QDoubleSpinBox *spinBox = new QDoubleSpinBox();
+            spinBox->setDecimals(7);
             setting s(sunAzimuthAddress, obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
             groupName.toLocal8Bit().data(), obj.value(QString("default")).toDouble(), obj.value(QString("min")).toDouble(),
-            obj.value(QString("max")).toDouble(), i, settingType::FLOAT);
+            obj.value(QString("max")).toDouble(), i, settingType::FLOAT, spinBox);
             settings.push_back(s);
             float val;
             s.read(val);
@@ -180,7 +213,7 @@ void MainWindow::GenerateUI(){
             QCheckBox *cb = new QCheckBox(infoText);
             setting s(sunAzimuthAddress, obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
             groupName.toLocal8Bit().data(), obj.value(QString("default")).toBool(), false,
-            true, i, settingType::BOOL);
+            true, i, settingType::BOOL, cb);
             settings.push_back(s);
             bool val;
             s.read(val);
@@ -194,6 +227,80 @@ void MainWindow::GenerateUI(){
         widget->setStyleSheet("margin: 5 0 5 0;");
         widget->setObjectName("settingUIelement" + QString::number(i));
     }
+    changingUIvalues = false;
 }
 
+
+
+void MainWindow::on_actionExit_triggered()
+{
+    QCoreApplication::quit();
+}
+
+
+void MainWindow::on_actionPreferences_triggered()
+{
+    metasettings = new metaSettings(this);
+    metasettings->setModal(true);
+    if (staticOffset != 0) metasettings->updateStaticOffset(staticOffset);
+    if(metasettings->exec() == QDialog::Accepted){
+        utils::writeConfigProperty("staticOffset", utils::decToHex(metasettings->staticOffsetTransferVar));
+        readPreferences();
+        for (int i = 0; i < settings.size(); i++) {
+            settings[i].updateAddr();
+        }
+        on_actionReread_all_setting_values_triggered();
+    }
+}
+void MainWindow::readPreferences(){
+    if(!QFile::exists(QCoreApplication::applicationDirPath() +"/config.json")){return;}
+    QFile file(QCoreApplication::applicationDirPath() +"/config.json");
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    QString rawText = file.readAll();
+    file.close();
+    QJsonDocument document = QJsonDocument::fromJson(rawText.toUtf8());
+    QJsonObject obj = document.object();
+    staticOffset = utils::hexToDec(obj.value(QString("staticOffset")).toString());
+    settingsJsonPath = obj.value(QString("settingsJSONpath")).toString();
+    sunAzimuthAddress = getBaseWorkingAddress(staticOffset);
+}
+
+
+void MainWindow::on_actionReread_all_setting_values_triggered()
+{
+    changingUIvalues = true;
+    for (int i = 0; i < settings.size(); i++) {
+        switch (settings[i].type) {
+            case settingType::FLOAT:{
+                float newVal = 0;
+                settings[i].read(newVal);
+                QDoubleSpinBox *widget = (QDoubleSpinBox*)settings[i].widget;
+                widget->setValue(newVal);
+                break;
+            }
+            case settingType::INT:{
+                int newVal = 0;
+                settings[i].read(newVal);
+                QSpinBox *widget = (QSpinBox*)settings[i].widget;
+                widget->setValue(newVal);
+                break;
+            }
+            case settingType::BOOL:{
+                bool newVal = false;
+                settings[i].read(newVal);
+                QCheckBox *widget = (QCheckBox*)settings[i].widget;
+                widget->setChecked(newVal);
+                break;
+            }
+        }
+
+    }
+    changingUIvalues = false;
+}
+
+
+void MainWindow::on_actionSelect_new_settings_JSON_file_triggered()
+{
+    selectJson();
+}
 

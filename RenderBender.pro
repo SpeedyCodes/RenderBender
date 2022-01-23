@@ -13,13 +13,18 @@ CONFIG += c++11
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
-    memoryediting.cpp
+    memoryediting.cpp \
+    metasettings.cpp \
+    utils.cpp
 
 HEADERS += \
-    mainwindow.h
+    mainwindow.h \
+    metasettings.h \
+    utils.h
 
 FORMS += \
-    mainwindow.ui
+    mainwindow.ui \
+    metasettings.ui
 
 RESOURCES += qdarkstyle/dark/style.qrc
 
