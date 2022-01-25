@@ -182,9 +182,12 @@ void MainWindow::GenerateUI(){
             layouts[layoutCounter]->insertWidget(0, label);
             QSpinBox *spinBox = new QSpinBox();
             int val;
+            int min = obj.value(QString("min")).toString().toInt();
+            int max = obj.value(QString("max")).toString().toInt();
+            spinBox->setRange(min, max);
             setting s(sunAzimuthAddress, obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
-            groupName.toLocal8Bit().data(), obj.value(QString("default")).toInt(), obj.value(QString("min")).toInt(),
-            obj.value(QString("max")).toInt(), i,  settingType::INT, spinBox);
+            groupName.toLocal8Bit().data(), obj.value(QString("default")).toInt(), min,
+            max, i,  settingType::INT, spinBox);
             settings.push_back(s);
             s.read(val);
             layouts[layoutCounter]->insertWidget(1, spinBox);
@@ -198,9 +201,12 @@ void MainWindow::GenerateUI(){
             layouts[layoutCounter]->insertWidget(0, label);
             QDoubleSpinBox *spinBox = new QDoubleSpinBox();
             spinBox->setDecimals(7);
+            float min = obj.value(QString("min")).toString().toFloat();
+            float max = obj.value(QString("max")).toString().toFloat();
+            spinBox->setRange(min, max);
             setting s(sunAzimuthAddress, obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
-            groupName.toLocal8Bit().data(), obj.value(QString("default")).toDouble(), obj.value(QString("min")).toDouble(),
-            obj.value(QString("max")).toDouble(), i, settingType::FLOAT, spinBox);
+            groupName.toLocal8Bit().data(), obj.value(QString("default")).toDouble(), min,
+            max, i, settingType::FLOAT, spinBox);
             settings.push_back(s);
             float val;
             s.read(val);
