@@ -20,13 +20,24 @@
 #include <sstream>
 #include <QDebug>
 #include <utils.h>
+#include <QStandardPaths>
+#include <QFileDialog>
+#include <QMessageBox>
 
 uintptr_t staticOffsetTransferVar;
-metaSettings::metaSettings(QWidget *parent) :
+int presetValueBehaviourTransferVar;
+QString settingsJsonPathTransferVar = "";
+metaSettings::metaSettings(QWidget *parent, uintptr_t statOff, int presValBeh, QString settingsJsonPath) :
     QDialog(parent),
     ui(new Ui::metaSettings)
 {
     ui->setupUi(this);
+    staticOffsetTransferVar = statOff;
+    presetValueBehaviourTransferVar = presValBeh;
+    settingsJsonPathTransferVar = settingsJsonPath;
+    if (staticOffsetTransferVar != 0) ui->staticMemoryOffsetTxt->setText(utils::decToHex(staticOffsetTransferVar));
+    if (presetValueBehaviourTransferVar != -1) ui->presValBehBox->setCurrentIndex(presetValueBehaviourTransferVar);
+    if (settingsJsonPathTransferVar != "") ui->JSONpathLabel->setText(settingsJsonPathTransferVar);
     ui->staticMemoryOffsetTxt->setValidator(new QRegExpValidator(QRegExp("0[xX][0-9a-fA-F]+"), ui->staticMemoryOffsetTxt));
 }
 
@@ -39,8 +50,25 @@ void metaSettings::on_staticMemoryOffsetTxt_textChanged(const QString &arg1)
 {
     staticOffsetTransferVar = utils::hexToDec(arg1);
 }
-void metaSettings::updateStaticOffset(uintptr_t newValue){
-    staticOffsetTransferVar = newValue;
-    ui->staticMemoryOffsetTxt->setText(utils::decToHex(staticOffsetTransferVar));
+
+void metaSettings::on_presValBehBox_currentIndexChanged(int index)
+{
+    presetValueBehaviourTransferVar = index;
+}
+
+void metaSettings::on_buttonBox_accepted()
+{
+    utils::writeConfigProperty("staticOffset", utils::decToHex(staticOffsetTransferVar));
+    utils::writeConfigProperty("settingsJSONpath", settingsJsonPathTransferVar);
+    utils::writeConfigProperty("presetValueBehaviour", presetValueBehaviourTransferVar);
+}
+
+void metaSettings::on_settingsJSONlocBtn_pressed()
+{
+    settingsJsonPathTransferVar = QFileDialog::getOpenFileName(this,tr("Open JSON"),  QStandardPaths::standardLocations(QStandardPaths::DownloadLocation).constFirst(), tr("JSON Files (*.json)"));
+    QMessageBox msgBox;
+    msgBox.setText("The new setting file's location will be saved as soon as you press OK. Please restart RenderBender afterwards for the changes to take effect.");
+    msgBox.exec();
+    ui->JSONpathLabel->setText(settingsJsonPathTransferVar);
 }
 

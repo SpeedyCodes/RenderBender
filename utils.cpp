@@ -30,18 +30,6 @@ uintptr_t utils::hexToDec(QString hex){
     return dec;
 }
 QString utils::decToHex(uintptr_t dec){
-    return QString::number( dec, 16 );
+    return "0x" + QString::number( dec, 16 );
 }
-void utils::writeConfigProperty(QString key, QString value){
-    QFile file(QCoreApplication::applicationDirPath() +"/config.json");
-    file.open(QIODevice::ReadWrite | QIODevice::Text);
-    QString rawText = file.readAll();
-    QJsonDocument document = QJsonDocument::fromJson(rawText.toUtf8());
-    QJsonObject jsonObject = document.object();
-    jsonObject.insert(key, value);
-    QJsonDocument jsonDoc;
-    jsonDoc.setObject(jsonObject);
-    file.resize(0);
-    file.write(jsonDoc.toJson());
-    file.close();
-}
+

@@ -9,53 +9,68 @@ If you do manage to break something, everything goes back to normal as soon as y
 
 Currently, its features are simple: when you start up the program, 
 it **displays the current value of the settings, and lets you edit them**.
-Settings are specified in a JSON file, which you can write yourself, or get from the Minecraft RTX discord server.
+Settings are specified in a JSON file, which you can write yourself, or get from the Minecraft RTX discord server. This file comes with default presets, which can be used to quickly apply a set of default values. These default values can be modified to your liking.
 
 There are many more features to come, such as
-- Presets
 - Keybinds to toggle presets
 - Dimension-specific presets
 - Preset layer system
 - User-made scripts for custom behaviour (i.e. wet ground during rain)
 
-For more information about upcoming features, and in what order they will be worked on, see the Roadmap section.
+For all upcoming features, and in what order they will be worked on, see the Roadmap section.
 
 ## Usage
 
 The latest version of RenderBender can be found in the `release` section.
-Also download a settings JSON file. A good starting point is the one made available with the 0.1.1 release. Alternatively, you could write your own, with the proper knowledge. A tutorial will be made for this in the future, but for now I'd recommend the premade file.
+Also download a settings JSON file. A good starting point is the one made available with the 0.2.0 release. Alternatively, you could write your own, with the proper knowledge. A tutorial will be made for this in the future, but for now I'd recommend the premade file.
 If you require assistance, the [Minecraft RTX Discord server](https://discord.gg/R56qgBBA9D) can help you (under the #mc-support channel).
-Unzip the file, and run RenderBender.exe.
-When running for the first time, you will need to go through these steps:
-- First, go to `File/Preferences` and set the static memory offset for your specific Minecraft version. You can find values for some common Minecraft versions here. If your version isn't yet on the list, you'll have to ask the people in the previously mentioned Discord server for help. If you have a Cheat Engine Cheat Table, you can get it from there too, if you know how (again, a tutorial for this is planned).
-    - 1.18.0: 0x0418C840
-    - 1.18.1: 0x04191C40
-    - 1.18.2: 0x04191C40
-- Secondly, click the button on the main screen to locate the previously downloaded JSON.
+Unzip the file, start up Minecraft and run RenderBender.exe.
+RenderBender will tell you the version number of the latest Minecraft version available at the time of writing. If that's the number of the version you're using: great! You can skip to loading in the JSON immediately. If not, you can try skipping to loading in the JSON too, and see if it works. If it doesn't work, you'll need to edit the static memory offset.
+##### Editing the static memory offset
+Go to `File/Preferences` and set the static memory offset for your specific Minecraft version. You can find values for some common versions here. If your version isn't yet on the list, you'll have to ask the people in the previously mentioned Discord server for help. If you have a Cheat Engine Cheat Table, you can get it from there too, if you know how (again, a tutorial for this is planned).
+    - Release 1.18.0: 0x0418C840
+    - Release 1.18.1: 0x04191C40
+    - Release 1.18.2: 0x04191C40
+    - Beta 1.18.10: 0x44FF788
+    - Beta 1.18.12: 0x44FF788
+    - Beta 1.18.20.26: 0x049D6680
+    - Beta 1.18.20.28: 0x04A38F60
+##### Loading in the JSON
+Click the button on the main screen to locate the previously downloaded JSON. You can always switch to a new file/location by editing it in `File/Preferences`.
 
 All settings included in the JSON file should appear. 
-If Minecraft was not yet running, RenderBender will display weird values for all the settings (usually 0). You can read the values again by clicking `View/Reread all setting values`.
-You can now change them by entering a new value, toggling the checkbox or using the arrow buttons/keys.
-Have fun!
+You can now change them by entering a new value, toggling the checkbox, using the arrow buttons/keys or moving the sliders.
+
+##### Saving presets
+When you've set the settings to values you like, you can save them by clicking Edit->Save Preset. Be warned: your previous preset will be overwritten. If you want to preserve the old preset, you can copy the settings JSON. To switch between presets, you simply switch between JSON file  by editing the path in `File/Preferences`.
 
 ## Roadmap
 
 These are the planned features for the next few updates. While they are all considered necessary and valuable additions, their order may still change in the future.
 
-Current version: **`0.1.1`**
-
-##### 0.2 release
-- Replace spinboxes with sliders
-- People can create and share their own presets.
 ##### 0.2.1 update
-- Sorting settings by category in different tabs
+- Presets do not have to contain values for every setting
 ##### 0.2.2 update
-- Descriptions + example images
+- Sorting settings by category in different tabs
 ##### 0.3 release
 - Installation program made available besides the .zip file
 - Automatic start-up with Minecraft
+- Minimize to system tray
+##### 0.3.1 update
+- Descriptions + example images
 
-More features are to come in the more distant future.
+More features are to come in the more distant future, such as
+- A layer system for presets
+- User-made scripts for custom behaviour (i.e. wet ground during rain)
+    - Disable sky brightness, sun brightness gradually when below certain y-value
+    - Smoothertron during and possibly after rain.
+- Automatic start-up (with Minecraft)
+- An online static offset repository from which RenderBender can fetch the correct one automatically
+- Snapping sliders to default and round numbers (toggleable)
+- Setting descriptions and example images
+- Keybinds to toggle presets
+- Dimension-specific presets
+- Editing radian values as if they were degrees
 ## Licenses
 
 - This project is built on the Qt graphics library, licensed under the GPL v3 license, available in `QT_LICENSE`.

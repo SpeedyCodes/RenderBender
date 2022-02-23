@@ -18,22 +18,23 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     void onAddWidget();
-    void onValueChanged();
     void readJson(QString path);
     void GenerateUI();
+    bool allowedToBoot;
 private slots:
     void selectJson();
     void onSettingValueChanged(int i);
     void onSettingValueChanged(double i);
-
     void on_actionExit_triggered();
-
     void on_actionPreferences_triggered();
-    void readPreferences();
-
+    bool readPreferences();
     void on_actionReread_all_setting_values_triggered();
+    void on_actionSetPresetValues_triggered();
+    void onResetToPresetButtonClicked();
+    void onSliderValueChanged(int index);
+    void on_actionSave_preset_triggered();
 
-    void on_actionSelect_new_settings_JSON_file_triggered();
+    void on_actionUsage_triggered();
 
 private:
     Ui::MainWindow *ui;

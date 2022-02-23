@@ -303,6 +303,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
        <enum>QLayout::SetFixedSize</enum>
       </property>
       <item>
+       <widget class="QFrame" name="frame">
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="verticalSpacer_8">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
@@ -359,7 +369,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionSelect_new_settings_JSON_file"/>
     <addaction name="actionPreferences"/>
     <addaction name="actionExit"/>
    </widget>
@@ -369,8 +378,23 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     </property>
     <addaction name="actionReread_all_setting_values"/>
    </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionSetPresetValues"/>
+    <addaction name="actionSave_preset"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionUsage"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
    <addaction name="menuView"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionExit">
@@ -393,7 +417,33 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     <string>Select new settings JSON file</string>
    </property>
   </action>
+  <action name="actionSetPresetValues">
+   <property name="text">
+    <string>Reset all to preset value</string>
+   </property>
+  </action>
+  <action name="actionSave_preset">
+   <property name="text">
+    <string>Save preset</string>
+   </property>
+   <property name="toolTip">
+    <string>Save current values as preset (overwriting the old preset values)</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+  <action name="actionUsage">
+   <property name="text">
+    <string>Usage</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
+ <slots>
+  <slot>selectJsonBtnClicked()</slot>
+ </slots>
 </ui>

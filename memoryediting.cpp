@@ -30,7 +30,7 @@ using namespace std;
 
 DWORD GetProcessId(const wchar_t* procName)
 {
-    DWORD procId = 0;
+    DWORD procId = 0; //The System Idle Process is given process ID 0 -> if procname is not found, return 0
     HANDLE hSnap = (CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0));
     if (hSnap != INVALID_HANDLE_VALUE)
     {
@@ -88,6 +88,7 @@ uintptr_t FindDMAAddress(HANDLE hProc, uintptr_t ptr, std::vector<unsigned int> 
 }
 uintptr_t getBaseWorkingAddress(uintptr_t staticOffset){
     DWORD procId = GetProcessId(L"Minecraft.Windows.exe");
+    if(procId == 0) return 0; //process not found
     uintptr_t moduleBase = GetModuleBaseAddress(procId, L"Minecraft.Windows.exe");
     HANDLE hProcess = 0;
     hProcess = OpenProcess(PROCESS_ALL_ACCESS, NULL, procId);
@@ -96,42 +97,6 @@ uintptr_t getBaseWorkingAddress(uintptr_t staticOffset){
     std::vector<unsigned int> baseOffsets = { 0x40, 0xA0, 0xC0, 0xDC };
     return FindDMAAddress(hProcess, dynamicPtrBaseAddr, baseOffsets);
 }
-
-int changeSetting(float value, uintptr_t settingAddr)
-{
-    float settingValue = 0;
-    DWORD procId = GetProcessId(L"Minecraft.Windows.exe");
-    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, NULL, procId);
-    ReadProcessMemory(hProcess, (BYTE*)settingAddr, &settingValue, sizeof(settingValue), nullptr);
-    if(settingValue == value){ return 0;} // value already correct, stop
-    WriteProcessMemory(hProcess, (BYTE*)settingAddr, &value, sizeof(value), nullptr);
-    ReadProcessMemory(hProcess, (BYTE*)settingAddr, &settingValue, sizeof(settingValue), nullptr);
-    if (settingValue == value) return 1; //value changed succesfully
-    else return -1; // failed to change value
-}int changeSetting(int value, uintptr_t settingAddr)
-{
-    int settingValue = 0;
-    DWORD procId = GetProcessId(L"Minecraft.Windows.exe");
-    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, NULL, procId);
-    ReadProcessMemory(hProcess, (BYTE*)settingAddr, &settingValue, sizeof(settingValue), nullptr);
-    if(settingValue == value){ return 0;} // value already correct, stop
-    WriteProcessMemory(hProcess, (BYTE*)settingAddr, &value, sizeof(value), nullptr);
-    ReadProcessMemory(hProcess, (BYTE*)settingAddr, &settingValue, sizeof(settingValue), nullptr);
-    if (settingValue == value) return 1; //value changed succesfully
-    else return -1; // failed to change value
-}int changeSetting(bool value, uintptr_t settingAddr)
-{
-    bool settingValue = 0;
-    DWORD procId = GetProcessId(L"Minecraft.Windows.exe");
-    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, NULL, procId);
-    ReadProcessMemory(hProcess, (BYTE*)settingAddr, &settingValue, sizeof(settingValue), nullptr);
-    if(settingValue == value){ return 0;} // value already correct, stop
-    WriteProcessMemory(hProcess, (BYTE*)settingAddr, &value, sizeof(value), nullptr);
-    ReadProcessMemory(hProcess, (BYTE*)settingAddr, &settingValue, sizeof(settingValue), nullptr);
-    if (settingValue == value) return 1; //value changed succesfully
-    else return -1; // failed to change value
-}
-
 uintptr_t computeSettingAddress(int settingIndex, uintptr_t base, QJsonObject &json){
     QJsonArray settings = json.value(QString("settings")).toArray();
     QJsonObject setting = settings[settingIndex].toObject();
@@ -146,16 +111,4 @@ uintptr_t computeSettingAddress(int settingIndex, uintptr_t base, QJsonObject &j
 HANDLE readPrep(){
     DWORD procId = GetProcessId(L"Minecraft.Windows.exe");
     return OpenProcess(PROCESS_ALL_ACCESS, NULL, procId);
-}
-void readSetting(uintptr_t settingAddr, int &resultVar)
-{
-    ReadProcessMemory(readPrep(), (BYTE*)settingAddr, &resultVar, sizeof(resultVar), nullptr);
-}
-void readSetting(uintptr_t settingAddr, float &resultVar)
-{
-    ReadProcessMemory(readPrep(), (BYTE*)settingAddr, &resultVar, sizeof(resultVar), nullptr);
-}
-void readSetting(uintptr_t settingAddr, bool &resultVar)
-{
-    ReadProcessMemory(readPrep(), (BYTE*)settingAddr, &resultVar, sizeof(resultVar), nullptr);
 }

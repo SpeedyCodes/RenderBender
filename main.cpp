@@ -21,6 +21,7 @@ int main(int argc, char *argv[])
         qApp->setStyleSheet(ts.readAll());
     }
     MainWindow w;
+    if(!w.allowedToBoot)return 0;
     w.show();
     return a.exec();
 }
