@@ -10,6 +10,7 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    QApplication::setAttribute(Qt::AA_DisableWindowContextHelpButton);
     QFile f(":qdarkstyle/dark/style.qss");
 
     if (!f.exists())   {

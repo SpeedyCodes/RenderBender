@@ -50,6 +50,7 @@ public:
     char *group;
     int index;
     //char *description;
+    bool presetEnabled;
     float defaultValue;
     float minVal;
     float maxVal;
@@ -79,7 +80,8 @@ public:
         resetButton->setEnabled((float)settingValue != (float)defaultValue);
         return (settingValue == value); //value changed succesfully/failed to change value
     }
-    int resetToPreset(){
+    bool resetToPreset(){
+        if(!presetEnabled) return true;
         switch (type) {
             case settingType::FLOAT:{
                 if(write(defaultValue) == true){
@@ -112,7 +114,9 @@ public:
         }
         return false;
     }
-    void presetIntake(){
+    void presetIntake(bool enabled){
+        presetEnabled = enabled;
+        resetButton->setVisible(presetEnabled);
         switch (type) {
             case settingType::FLOAT:{
                 QDoubleSpinBox *w = (QDoubleSpinBox*)widget;
@@ -133,7 +137,7 @@ public:
     }
     //https://stackoverflow.com/questions/351845/finding-the-type-of-an-object-in-c
     setting(uintptr_t &baseAddr, QString offsetString, char *name, char *groupName, float defaultVal, float min, float max, float i, settingType varType, QWidget* w, QPushButton* rb
-            , QSlider* sl){
+            , QSlider* sl, bool hasPreset){
         displayName = name;
         offset = utils::hexToDec(offsetString);
         base = &baseAddr;
@@ -147,6 +151,8 @@ public:
         widget = w;
         resetButton = rb;
         slider = sl;
+        presetEnabled = hasPreset;
+        if(!presetEnabled) resetButton->setVisible(false);
     }
 
 };
@@ -197,7 +203,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
         GenerateUI();
         UIGenerated = true;
     }
-    QLabel* label = new QLabel("RenderBender v0.2.0");
+    QLabel* label = new QLabel("RenderBender v0.2.1 Feature testing #1");
     statusBar()->addWidget(label);
 }
 
@@ -279,10 +285,12 @@ void MainWindow::GenerateUI(){
     progress.setWindowModality(Qt::WindowModal);
     progress.setMinimumDuration(500);
     progress.setCancelButton(nullptr);
+    QStringList settingNames;
 
     int layoutCounter = 0;
     QList<QVBoxLayout *> layouts = centralWidget()->findChildren<QVBoxLayout *>();
     QStringList groupNames;
+    vector<bool> enabledPresets = {};
     changingUIvalues = true;
     for (int i = 0; i < settingsJson.count(); i++) {
         progress.setValue(i);
@@ -298,6 +306,9 @@ void MainWindow::GenerateUI(){
         }
         QString type = obj.value(QString("type")).toString();
         QString infoText = obj.value(QString("displayName")).toString();
+        settingNames << infoText;
+        QString defaultVal = obj.value(QString("default")).toString();
+        enabledPresets.push_back(defaultVal != "null");
         QWidget *widget;
         QPushButton *resetButton = new QPushButton();
         resetButton->setText("Reset");
@@ -313,8 +324,8 @@ void MainWindow::GenerateUI(){
             int min = obj.value(QString("min")).toString().toInt();
             int max = obj.value(QString("max")).toString().toInt();
             setting s(sunAzimuthAddress, obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
-            groupName.toLocal8Bit().data(), obj.value(QString("default")).toString().toInt(), min,
-            max, i,  settingType::INT, spinBox, resetButton, slider);
+            groupName.toLocal8Bit().data(), defaultVal.toInt(), min,
+            max, i,  settingType::INT, spinBox, resetButton, slider, defaultVal != "null");
             settings.push_back(s);
             int val;
             s.read(val);
@@ -354,8 +365,8 @@ void MainWindow::GenerateUI(){
             float min = obj.value(QString("min")).toString().toFloat();
             float max = obj.value(QString("max")).toString().toFloat();
             setting s(sunAzimuthAddress, obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
-            groupName.toLocal8Bit().data(),obj.value(QString("default")).toString().toFloat(), min,
-            max, i, settingType::FLOAT, spinBox, resetButton, slider);
+            groupName.toLocal8Bit().data(),defaultVal.toFloat(), min,
+            max, i, settingType::FLOAT, spinBox, resetButton, slider, defaultVal != "null");
             settings.push_back(s);
             float val;
             s.read(val);
@@ -388,9 +399,10 @@ void MainWindow::GenerateUI(){
             QFrame *frame = new QFrame();
             QHBoxLayout *la = new QHBoxLayout();
             QCheckBox *cb = new QCheckBox(infoText);
+
             setting s(sunAzimuthAddress, obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
-            groupName.toLocal8Bit().data(), obj.value(QString("default")).toString() == "1" || obj.value(QString("default")).toString() == "1", false,
-            true, i, settingType::BOOL, cb, resetButton, nullptr);
+            groupName.toLocal8Bit().data(), defaultVal == "1", false,
+            true, i, settingType::BOOL, cb, resetButton, nullptr, defaultVal != "null");
             settings.push_back(s);
             bool val;
             s.read(val);
@@ -413,6 +425,9 @@ void MainWindow::GenerateUI(){
     }
     changingUIvalues = false;
     settingCount = settingsJson.count();
+
+    savepresetdialog = new savePresetDialog(this, &settingNames, enabledPresets);
+    savepresetdialog->setModal(true);
     progress.setValue(settingsJson.count());
     if(presetValueBehaviour == 2){
         on_actionSetPresetValues_triggered();
@@ -424,6 +439,7 @@ void MainWindow::GenerateUI(){
             on_actionSetPresetValues_triggered();
         }
     }
+    move(104, 30);
 }
 
 void MainWindow::on_actionExit_triggered()
@@ -519,12 +535,16 @@ void MainWindow::on_actionSetPresetValues_triggered()
 
 void MainWindow::on_actionSave_preset_triggered()
 {
+    vector<bool> presetEnabledList;
+    if(savepresetdialog->exec() == QDialog::Accepted){
+        presetEnabledList = savepresetdialog->readToggles();
+    } else return;
     QProgressDialog progress("Saving current values as the new preset...", "stop", 0, settingCount, this);
     progress.setWindowModality(Qt::WindowModal);
     progress.setMinimumDuration(500);
     progress.setCancelButton(nullptr);
     for (int i = 0; i < settingCount; i++) {
-        settings[i].presetIntake();
+        settings[i].presetIntake(presetEnabledList[i]);
         progress.setValue(i/2);
     }
 
@@ -537,7 +557,8 @@ void MainWindow::on_actionSave_preset_triggered()
 
     for (int i = 0; i < settingCount; i++) {
         QJsonObject setting = settingsArray.at(i).toObject();
-        setting.insert("default", QString::number(settings[i].defaultValue));
+        if(settings[i].presetEnabled) setting.insert("default", QString::number(settings[i].defaultValue));
+        else setting.insert("default", "null");
         settingsArray.removeAt(i);
         settingsArray.insert(i, setting);
         progress.setValue(settingCount/2 + i/2);

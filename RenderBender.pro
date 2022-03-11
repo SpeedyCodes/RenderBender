@@ -15,16 +15,19 @@ SOURCES += \
     mainwindow.cpp \
     memoryediting.cpp \
     metasettings.cpp \
+    savepresetdialog.cpp \
     utils.cpp
 
 HEADERS += \
     mainwindow.h \
     metasettings.h \
+    savepresetdialog.h \
     utils.h
 
 FORMS += \
     mainwindow.ui \
-    metasettings.ui
+    metasettings.ui \
+    savepresetdialog.ui
 
 RESOURCES += qdarkstyle/dark/style.qrc
 

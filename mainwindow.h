@@ -6,6 +6,7 @@
 
 #include <QMainWindow>
 #include <metasettings.h>
+#include <savepresetdialog.h>
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -39,5 +40,6 @@ private slots:
 private:
     Ui::MainWindow *ui;
     metaSettings *metasettings;
+    savePresetDialog *savepresetdialog;
 };
 #endif // MAINWINDOW_H
