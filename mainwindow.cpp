@@ -35,6 +35,7 @@
 #include <QSlider>
 #include <QProgressDialog>
 #include <QDesktopServices>
+#include <oldcepresetimportdialog.h>
 
 enum class settingType { INT, FLOAT, BOOL};
 HANDLE readPrep();
@@ -135,6 +136,24 @@ public:
             }
         }
     }
+    void presetIntake(bool enabled, float value){
+        presetEnabled = enabled;
+        resetButton->setVisible(presetEnabled);
+        switch (type) {
+            case settingType::FLOAT:{
+                defaultValue = value;
+                break;
+            }
+            case settingType::INT:{
+                defaultValue = (int)value;
+                break;
+            }
+            case settingType::BOOL:{
+                defaultValue = (bool)value;
+                break;
+            }
+        }
+    }
     //https://stackoverflow.com/questions/351845/finding-the-type-of-an-object-in-c
     setting(uintptr_t &baseAddr, QString offsetString, char *name, char *groupName, float defaultVal, float min, float max, float i, settingType varType, QWidget* w, QPushButton* rb
             , QSlider* sl, bool hasPreset){
@@ -169,13 +188,14 @@ QString settingsJsonPath = "";
 bool changingUIvalues = false;
 bool allowedToBoot = true;
 int settingCount;
+QStringList settingNames;
 
 MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 {
     while(GetProcessId(L"Minecraft.Windows.exe") == 0){
         QMessageBox msgBox;
-        msgBox.setText("The Minecraft process was not detected. Please start up Minecraft first, and then press OK to try again. Alternatively, press cancel to quit.");
-        msgBox.setStandardButtons(QMessageBox::Cancel | QMessageBox::Ok);
+        msgBox.setText("The Minecraft process was not detected. Please start up Minecraft first and retry. Alternatively, press cancel to quit.");
+        msgBox.setStandardButtons(QMessageBox::Cancel | QMessageBox::Retry);
         if(msgBox.exec() == QMessageBox::Cancel){
             allowedToBoot = false;
             return;
@@ -203,7 +223,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
         GenerateUI();
         UIGenerated = true;
     }
-    QLabel* label = new QLabel("RenderBender v0.2.1 Feature testing #1");
+    QLabel* label = new QLabel("RenderBender v0.2.1");
     statusBar()->addWidget(label);
 }
 
@@ -285,11 +305,9 @@ void MainWindow::GenerateUI(){
     progress.setWindowModality(Qt::WindowModal);
     progress.setMinimumDuration(500);
     progress.setCancelButton(nullptr);
-    QStringList settingNames;
-
+    QStringList groupNames;
     int layoutCounter = 0;
     QList<QVBoxLayout *> layouts = centralWidget()->findChildren<QVBoxLayout *>();
-    QStringList groupNames;
     vector<bool> enabledPresets = {};
     changingUIvalues = true;
     for (int i = 0; i < settingsJson.count(); i++) {
@@ -581,5 +599,61 @@ void MainWindow::on_actionSave_preset_triggered()
 void MainWindow::on_actionUsage_triggered()
 {
     QDesktopServices::openUrl(QUrl("https://github.com/SpeedyCodes/RenderBender#Usage"));
+}
+
+
+void MainWindow::on_actionCEPresetImport_triggered()
+{
+    oldCEPresetImportdialog *dialog = new oldCEPresetImportdialog(this, &settingNames);
+    dialog->setModal(true);
+    vector<bool> presetEnabledList;
+    std::vector<float> settingValues;
+    if(dialog->exec() == QDialog::Accepted){
+        presetEnabledList = dialog->activeSettings;
+        settingValues = dialog->settingValues;
+    } else return;
+
+    QProgressDialog progress("Saving current values as the new preset...", "stop", 0, settingCount, this);
+    progress.setWindowModality(Qt::WindowModal);
+    progress.setMinimumDuration(500);
+    progress.setCancelButton(nullptr);
+    for (int i = 0; i < settingCount; i++) {
+        settings[i].presetIntake(presetEnabledList[i], settingValues[i]);
+        progress.setValue(i/2);
+    }
+
+    QFile file(settingsJsonPath);
+    file.open(QIODevice::ReadWrite | QIODevice::Text);
+    QString rawText = file.readAll();
+    QJsonDocument document = QJsonDocument::fromJson(rawText.toUtf8());
+    QJsonObject jsonObject = document.object();
+    QJsonArray settingsArray = jsonObject.value("settings").toArray();
+
+    for (int i = 0; i < settingCount; i++) {
+        QJsonObject setting = settingsArray.at(i).toObject();
+        if(settings[i].presetEnabled) setting.insert("default", QString::number(settings[i].defaultValue));
+        else setting.insert("default", "null");
+        settingsArray.removeAt(i);
+        settingsArray.insert(i, setting);
+        progress.setValue(settingCount/2 + i/2);
+    }
+
+    jsonObject.insert("settings", settingsArray);
+    QJsonDocument jsonDoc;
+    jsonDoc.setObject(jsonObject);
+    file.resize(0);
+    file.write(jsonDoc.toJson());
+    file.close();
+    progress.setValue(settingCount);
+    QMessageBox msgBox;
+    msgBox.setText("The new preset has been saved.");
+    msgBox.setStandardButtons(QMessageBox::Ok);
+    msgBox.exec();
+
+    msgBox.setText("Would you like to set all the values to their presets now? (you can always do this later from Edit->Reset all to preset value)");
+    msgBox.setStandardButtons(QMessageBox::No | QMessageBox::Yes);
+    if(msgBox.exec() == QMessageBox::Yes){
+        on_actionSetPresetValues_triggered();
+    }
 }
 

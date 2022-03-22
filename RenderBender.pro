@@ -15,18 +15,21 @@ SOURCES += \
     mainwindow.cpp \
     memoryediting.cpp \
     metasettings.cpp \
+    oldcepresetimportdialog.cpp \
     savepresetdialog.cpp \
     utils.cpp
 
 HEADERS += \
     mainwindow.h \
     metasettings.h \
+    oldcepresetimportdialog.h \
     savepresetdialog.h \
     utils.h
 
 FORMS += \
     mainwindow.ui \
     metasettings.ui \
+    oldcepresetimportdialog.ui \
     savepresetdialog.ui
 
 RESOURCES += qdarkstyle/dark/style.qrc

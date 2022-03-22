@@ -37,6 +37,8 @@ private slots:
 
     void on_actionUsage_triggered();
 
+    void on_actionCEPresetImport_triggered();
+
 private:
     Ui::MainWindow *ui;
     metaSettings *metasettings;

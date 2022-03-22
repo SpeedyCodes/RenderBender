@@ -362,13 +362,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
      <x>0</x>
      <y>0</y>
      <width>871</width>
-     <height>20</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionCEPresetImport"/>
     <addaction name="actionPreferences"/>
     <addaction name="actionExit"/>
    </widget>
@@ -438,6 +439,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   <action name="actionUsage">
    <property name="text">
     <string>Usage</string>
+   </property>
+  </action>
+  <action name="actionCEPresetImport">
+   <property name="text">
+    <string>Import old CE preset</string>
    </property>
   </action>
  </widget>
