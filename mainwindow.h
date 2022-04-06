@@ -34,7 +34,7 @@ private slots:
     void onResetToPresetButtonClicked();
     void onSliderValueChanged(int index);
     void on_actionSave_preset_triggered();
-
+    void temporaryHighlightFade();
     void on_actionUsage_triggered();
 
     void on_actionCEPresetImport_triggered();

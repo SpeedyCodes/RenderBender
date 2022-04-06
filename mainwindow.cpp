@@ -28,7 +28,7 @@
 #include <QFileDialog>
 #include <QStandardPaths>
 #include <Windows.h>
-#include <sstream>
+#include <QTimer>
 #include <metasettings.h>
 #include <utils.h>
 #include <QMessageBox>
@@ -36,11 +36,15 @@
 #include <QProgressDialog>
 #include <QDesktopServices>
 #include <oldcepresetimportdialog.h>
+#include <QScreen>
+#include <QCompleter>
+#include <QLineEdit>
 
 enum class settingType { INT, FLOAT, BOOL};
 HANDLE readPrep();
 DWORD GetProcessId(const wchar_t* procName);
 const int defaultSpinboxPrecision = 7;
+QWidget *fadeOutTarget;
 class setting {
 public:
     char *displayName;
@@ -48,7 +52,7 @@ public:
     uintptr_t* base;
     uintptr_t addr;
     int offset;
-    char *group;
+    int group;
     int index;
     //char *description;
     bool presetEnabled;
@@ -155,13 +159,13 @@ public:
         }
     }
     //https://stackoverflow.com/questions/351845/finding-the-type-of-an-object-in-c
-    setting(uintptr_t &baseAddr, QString offsetString, char *name, char *groupName, float defaultVal, float min, float max, float i, settingType varType, QWidget* w, QPushButton* rb
+    setting(uintptr_t &baseAddr, QString offsetString, char *name, int groupIndex, float defaultVal, float min, float max, float i, settingType varType, QWidget* w, QPushButton* rb
             , QSlider* sl, bool hasPreset){
         displayName = name;
         offset = utils::hexToDec(offsetString);
         base = &baseAddr;
         updateAddr();
-        group = groupName;
+        group = groupIndex;
         index = i;
         type = varType;
         defaultValue = defaultVal;
@@ -175,6 +179,10 @@ public:
     }
 
 };
+void MainWindow::temporaryHighlightFade() {
+    fadeOutTarget->setStyleSheet("");
+    return;
+}
 uintptr_t getBaseWorkingAddress(uintptr_t staticOffset);
 uintptr_t computeSettingAddress(int settingIndex, uintptr_t base, QJsonObject &json);
 using namespace std;
@@ -223,7 +231,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
         GenerateUI();
         UIGenerated = true;
     }
-    QLabel* label = new QLabel("RenderBender v0.2.1");
+    QLabel* label = new QLabel("RenderBender v0.2.2 Feature Testing #1");
     statusBar()->addWidget(label);
 }
 
@@ -297,17 +305,28 @@ void MainWindow::onResetToPresetButtonClicked(){
     settings[index].resetToPreset();
     changingUIvalues = false;
 }
-void MainWindow::GenerateUI(){    
-    delete ui->selectJsonBtn;
-    delete ui->selectJsonLabel;
+void MainWindow::GenerateUI(){
+    QLayoutItem *child;
+    while ((child = ui->horizontalLayout->takeAt(0)) != nullptr) {
+        delete child->widget();
+        delete child;
+    }
+    delete ui->centralwidget->layout();
+    ui->centralwidget->setLayout(new QVBoxLayout);
+    QWidget *searchWidget = new QWidget();
+    searchWidget->setLayout(new QHBoxLayout());
+    searchWidget->layout()->addWidget(new QLabel("Search"));
+    QLineEdit* searchbox = new QLineEdit();
+    searchWidget->layout()->addWidget(searchbox);
+    ui->centralwidget->layout()->addWidget(searchWidget);
+    QTabWidget *tabwidget = new QTabWidget();
+    ui->centralwidget->layout()->addWidget(tabwidget);
     QJsonArray settingsJson = json.value(QString("settings")).toArray();
     QProgressDialog progress("Generating UI...", "stop", 0, settingsJson.count(), this);
     progress.setWindowModality(Qt::WindowModal);
     progress.setMinimumDuration(500);
     progress.setCancelButton(nullptr);
     QStringList groupNames;
-    int layoutCounter = 0;
-    QList<QVBoxLayout *> layouts = centralWidget()->findChildren<QVBoxLayout *>();
     vector<bool> enabledPresets = {};
     changingUIvalues = true;
     for (int i = 0; i < settingsJson.count(); i++) {
@@ -317,10 +336,25 @@ void MainWindow::GenerateUI(){
         QString groupName = obj.value(QString("group")).toString();
         if(!groupNames.contains(groupName)){
             groupNames << groupName;
-            //layoutCounter = groupNames.indexOf(groupName);
-        }
-        if(i != 0 && i%14 == 0){
-            layoutCounter++;
+            QWidget* w = new QWidget;
+            QHBoxLayout* layout = new QHBoxLayout;
+            tabwidget->addTab(w, groupName);
+            QWidget* div1 = new QWidget;
+            QWidget* div2 = new QWidget;
+            QWidget* div3 = new QWidget;
+            QVBoxLayout* la1 = new QVBoxLayout;
+            la1->insertStretch(-1);
+            div1->setLayout(la1);
+            QVBoxLayout* la2 = new QVBoxLayout;
+            la2->insertStretch(-1);
+            div2->setLayout(la2);
+            QVBoxLayout* la3 = new QVBoxLayout;
+            la3->insertStretch(-1);
+            div3->setLayout(la3);
+            layout->addWidget(div1);
+            layout->addWidget(div2);
+            layout->addWidget(div3);
+            w->setLayout(layout);
         }
         QString type = obj.value(QString("type")).toString();
         QString infoText = obj.value(QString("displayName")).toString();
@@ -330,6 +364,18 @@ void MainWindow::GenerateUI(){
         QWidget *widget;
         QPushButton *resetButton = new QPushButton();
         resetButton->setText("Reset");
+        int groupIndex = groupNames.indexOf(groupName);
+        QVBoxLayout* tabFrame = (QVBoxLayout*)tabwidget->widget(groupIndex)->layout();
+        QVBoxLayout* currentContainerDiv;
+        //currentContainerDiv = (QVBoxLayout*)tabFrame->itemAt(0)->widget()->layout();
+        for (int i = 0; i < tabFrame->count(); i++) {
+            QWidget* w = tabFrame->itemAt(i)->widget();
+            if(!tabFrame->itemAt(i)->isEmpty() && w->layout()->count() < 10){
+                currentContainerDiv = (QVBoxLayout*)w->layout();
+                break;
+            }
+        }
+        tabFrame->insertStretch(-1);
         if (type == "int"){
             QFrame *mainFrame = new QFrame();
             QVBoxLayout *mainLayout = new QVBoxLayout();
@@ -342,7 +388,7 @@ void MainWindow::GenerateUI(){
             int min = obj.value(QString("min")).toString().toInt();
             int max = obj.value(QString("max")).toString().toInt();
             setting s(sunAzimuthAddress, obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
-            groupName.toLocal8Bit().data(), defaultVal.toInt(), min,
+            groupIndex, defaultVal.toInt(), min,
             max, i,  settingType::INT, spinBox, resetButton, slider, defaultVal != "null");
             settings.push_back(s);
             int val;
@@ -368,7 +414,7 @@ void MainWindow::GenerateUI(){
             subLayout->insertWidget(1, resetButton);
             mainLayout->insertWidget(1, subFrame);
             mainLayout->insertWidget(2, slider);
-            layouts[layoutCounter]->insertWidget(0, mainFrame);
+            currentContainerDiv->insertWidget(0, mainFrame);
             widget = spinBox;
         }
         else if (type == "float"){
@@ -383,7 +429,7 @@ void MainWindow::GenerateUI(){
             float min = obj.value(QString("min")).toString().toFloat();
             float max = obj.value(QString("max")).toString().toFloat();
             setting s(sunAzimuthAddress, obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
-            groupName.toLocal8Bit().data(),defaultVal.toFloat(), min,
+            groupIndex,defaultVal.toFloat(), min,
             max, i, settingType::FLOAT, spinBox, resetButton, slider, defaultVal != "null");
             settings.push_back(s);
             float val;
@@ -410,7 +456,7 @@ void MainWindow::GenerateUI(){
             subLayout->insertWidget(1, resetButton);
             mainLayout->insertWidget(1, subFrame);
             mainLayout->insertWidget(2, slider);
-            layouts[layoutCounter]->insertWidget(0, mainFrame);
+            currentContainerDiv->insertWidget(0, mainFrame);
             widget = spinBox;
         }
         else if (type == "bool"){
@@ -419,7 +465,7 @@ void MainWindow::GenerateUI(){
             QCheckBox *cb = new QCheckBox(infoText);
 
             setting s(sunAzimuthAddress, obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
-            groupName.toLocal8Bit().data(), defaultVal == "1", false,
+            groupIndex, defaultVal == "1", false,
             true, i, settingType::BOOL, cb, resetButton, nullptr, defaultVal != "null");
             settings.push_back(s);
             bool val;
@@ -427,8 +473,8 @@ void MainWindow::GenerateUI(){
             la->insertWidget(0, cb);
             la->insertWidget(1, resetButton);
             frame->setLayout(la);
-            layouts[layoutCounter]->insertWidget(0, frame);
             cb->setChecked(val);
+            currentContainerDiv->insertWidget(0, frame);
             QObject::connect(cb, SIGNAL(stateChanged(int)), this, SLOT(onSettingValueChanged(int)));
             widget = cb;
         }
@@ -444,6 +490,25 @@ void MainWindow::GenerateUI(){
     changingUIvalues = false;
     settingCount = settingsJson.count();
 
+    QCompleter *fileEditCompleter = new QCompleter(settingNames, this);
+    fileEditCompleter->setCaseSensitivity(Qt::CaseInsensitive);
+    fileEditCompleter->setCompletionMode(QCompleter::InlineCompletion);
+    searchbox->setCompleter(fileEditCompleter);
+    connect(fileEditCompleter, QOverload<const QString &>::of(&QCompleter::highlighted),
+        [=](const QString &text){
+        ((QFrame)settings[settingNames.indexOf(text)].widget).setFrameStyle(QFrame::Panel | QFrame::Raised);
+        tabwidget->setCurrentIndex(settings[settingNames.indexOf(text)].group);
+        if(settings[settingNames.indexOf(text)].type == settingType::BOOL){
+            fadeOutTarget = settings[settingNames.indexOf(text)].widget->parentWidget();
+        }else{
+            fadeOutTarget = settings[settingNames.indexOf(text)].widget->parentWidget()->parentWidget();
+        }
+
+        fadeOutTarget->setStyleSheet("");
+        fadeOutTarget->setStyleSheet("background-color: rgb(38, 50, 66)");
+        QTimer::singleShot(1000, this, SLOT(temporayHighlightFade()));
+});
+
     savepresetdialog = new savePresetDialog(this, &settingNames, enabledPresets);
     savepresetdialog->setModal(true);
     progress.setValue(settingsJson.count());
@@ -458,6 +523,7 @@ void MainWindow::GenerateUI(){
         }
     }
     move(104, 30);
+    resize(QGuiApplication::primaryScreen()->availableGeometry().size() * 0.5);
 }
 
 void MainWindow::on_actionExit_triggered()
