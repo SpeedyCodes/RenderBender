@@ -180,7 +180,9 @@ public:
 
 };
 void MainWindow::temporaryHighlightFade() {
+    if(fadeOutTarget == nullptr) return;
     fadeOutTarget->setStyleSheet("");
+    fadeOutTarget = nullptr;
     return;
 }
 uintptr_t getBaseWorkingAddress(uintptr_t staticOffset);
@@ -231,7 +233,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
         GenerateUI();
         UIGenerated = true;
     }
-    QLabel* label = new QLabel("RenderBender v0.2.2 Feature Testing #1");
+    QLabel* label = new QLabel("RenderBender v0.2.2");
     statusBar()->addWidget(label);
 }
 
@@ -496,6 +498,7 @@ void MainWindow::GenerateUI(){
     searchbox->setCompleter(fileEditCompleter);
     connect(fileEditCompleter, QOverload<const QString &>::of(&QCompleter::highlighted),
         [=](const QString &text){
+        if(fadeOutTarget != nullptr) temporaryHighlightFade();
         ((QFrame)settings[settingNames.indexOf(text)].widget).setFrameStyle(QFrame::Panel | QFrame::Raised);
         tabwidget->setCurrentIndex(settings[settingNames.indexOf(text)].group);
         if(settings[settingNames.indexOf(text)].type == settingType::BOOL){
@@ -506,7 +509,7 @@ void MainWindow::GenerateUI(){
 
         fadeOutTarget->setStyleSheet("");
         fadeOutTarget->setStyleSheet("background-color: rgb(38, 50, 66)");
-        QTimer::singleShot(1000, this, SLOT(temporayHighlightFade()));
+        QTimer::singleShot(1000, this, SLOT(temporaryHighlightFade()));
 });
 
     savepresetdialog = new savePresetDialog(this, &settingNames, enabledPresets);
