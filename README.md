@@ -33,8 +33,7 @@ Go to `File/Preferences` and set the static memory offset for your specific Mine
 - Release 1.18.2: 0x04191C40
 - Beta 1.18.10: 0x44FF788
 - Beta 1.18.12: 0x44FF788
-- Beta 1.18.20.26: 0x049D6680
-- Beta 1.18.20.28: 0x04A38F60
+- Release 1.18.30: 0x053D3188
 
 If your version isn't yet on the list, you'll have to ask the people in the previously mentioned Discord server for help. If you have a Cheat Engine Cheat Table, you can get it from there too, if you know how. 
 If this all sounds rather complicated: we are currently working on a way for RenderBender to detect the static memory offset automatically.
@@ -47,17 +46,18 @@ You can now change them by entering a new value, toggling the checkbox, using th
 ##### Saving presets
 When you've set the settings to values you like, you can save them by clicking Edit->Save Preset. Here, you can select the settings you want to store presets for. Be warned: your previous preset will be overwritten. If you want to preserve the old preset, you can copy the settings JSON. To switch between presets, you simply switch between JSON file  by editing the path in `File/Preferences`.
 
+##### Importing Cheat Engine presets
+If you want to use a preset from the #rtx-presets channel of the Minecraft RTX Discord server (originally intended to be used with Cheat Engine), you can click `File/Import old CE preset`. The string containing setting values can be pasted directly into the text box. It will be parsed and automatically converted to a RenderBender preset. It will overwrite the existing preset, so if you would like to keep the old one as well, see the `Saving presets` section above. 
+
 ## Roadmap
 
 These are the planned features for the next few updates. While they are all considered necessary and valuable additions, their order may still change in the future.
 
-##### 0.2.2 update
-- Sorting settings by category in different tabs
 ##### 0.3 release
-- Automatic reading of the static memory offset
 - Installation program made available besides the .zip file
 - Automatic start-up with Minecraft
 - Minimize to system tray
+- Automatic reading of the static memory offset (could be postponed)
 ##### 0.3.1 update
 - Descriptions + example images
 

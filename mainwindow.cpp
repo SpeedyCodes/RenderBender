@@ -217,9 +217,9 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     if(!config.exists()){
         QJsonObject jsonObject;
         jsonObject.insert("presetValueBehaviour", 1);
-        jsonObject.insert("staticOffset", "0x044FF788");
+        jsonObject.insert("staticOffset", "0x053D3188");
         QMessageBox msgBox;
-        msgBox.setText("The 'Static memory offset' setting has been set to 0x044FF788, the correct value for the latest Minecraft release version at the time of writing, 1.18.12. As this value can change depending on what Minecraft version you are using, you may need to change it in File->Preferences if you are using another version. Please consult the Github README (click Help->Usage) to find the correct value for you.");
+        msgBox.setText("The 'Static memory offset' setting has been set to 0x053D3188, the correct value for the latest Minecraft release version at the time of writing, 1.18.30. As this value can change depending on what Minecraft version you are using, you may need to change it in File->Preferences if you are using another version. Please consult the Github README (click Help->Usage) to find the correct value for you.");
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.exec();
         QJsonDocument jsonDoc;
@@ -525,7 +525,6 @@ void MainWindow::GenerateUI(){
             on_actionSetPresetValues_triggered();
         }
     }
-    move(104, 30);
     resize(QGuiApplication::primaryScreen()->availableGeometry().size() * 0.5);
 }
 
