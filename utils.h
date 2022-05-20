@@ -29,6 +29,8 @@ public:
         file.write(jsonDoc.toJson());
         file.close();
     }
+    static void runMinecraft();
+    static QString version;
 };
 
 #endif // UTILS_H

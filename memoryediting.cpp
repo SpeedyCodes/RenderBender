@@ -31,7 +31,7 @@ using namespace std;
 DWORD GetProcessId(const wchar_t* procName)
 {
     DWORD procId = 0; //The System Idle Process is given process ID 0 -> if procname is not found, return 0
-    HANDLE hSnap = (CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0));
+    HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (hSnap != INVALID_HANDLE_VALUE)
     {
         PROCESSENTRY32 procEntry;
@@ -86,12 +86,8 @@ uintptr_t FindDMAAddress(HANDLE hProc, uintptr_t ptr, std::vector<unsigned int> 
     }
     return addr;
 }
-uintptr_t getBaseWorkingAddress(uintptr_t staticOffset){
-    DWORD procId = GetProcessId(L"Minecraft.Windows.exe");
-    if(procId == 0) return 0; //process not found
+uintptr_t getBaseWorkingAddress(DWORD procId, HANDLE hProcess, uintptr_t staticOffset){
     uintptr_t moduleBase = GetModuleBaseAddress(procId, L"Minecraft.Windows.exe");
-    HANDLE hProcess = 0;
-    hProcess = OpenProcess(PROCESS_ALL_ACCESS, NULL, procId);
     uintptr_t dynamicPtrBaseAddr = moduleBase + staticOffset;
 
     std::vector<unsigned int> baseOffsets = { 0x40, 0xA0, 0xC0, 0xDC };
@@ -107,8 +103,4 @@ uintptr_t computeSettingAddress(int settingIndex, uintptr_t base, QJsonObject &j
     ss << std::hex << Addr;
     ss >> x;
     return base + static_cast<int>(x);
-}
-HANDLE readPrep(){
-    DWORD procId = GetProcessId(L"Minecraft.Windows.exe");
-    return OpenProcess(PROCESS_ALL_ACCESS, NULL, procId);
 }

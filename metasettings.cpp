@@ -27,7 +27,9 @@
 uintptr_t staticOffsetTransferVar;
 int presetValueBehaviourTransferVar;
 QString settingsJsonPathTransferVar = "";
-metaSettings::metaSettings(QWidget *parent, uintptr_t statOff, int presValBeh, QString settingsJsonPath) :
+bool autoMcStartupBehaviourTransferVar;
+bool behaviourOnMcShutdownTransferVar;
+metaSettings::metaSettings(QWidget *parent, uintptr_t statOff, int presValBeh, QString settingsJsonPath, bool autoMcStartupBehaviour, bool behaviourOnMcShutdown):
     QDialog(parent),
     ui(new Ui::metaSettings)
 {
@@ -35,9 +37,13 @@ metaSettings::metaSettings(QWidget *parent, uintptr_t statOff, int presValBeh, Q
     staticOffsetTransferVar = statOff;
     presetValueBehaviourTransferVar = presValBeh;
     settingsJsonPathTransferVar = settingsJsonPath;
+    autoMcStartupBehaviourTransferVar = autoMcStartupBehaviour;
+    behaviourOnMcShutdownTransferVar = behaviourOnMcShutdown;
     if (staticOffsetTransferVar != 0) ui->staticMemoryOffsetTxt->setText(utils::decToHex(staticOffsetTransferVar));
     if (presetValueBehaviourTransferVar != -1) ui->presValBehBox->setCurrentIndex(presetValueBehaviourTransferVar);
     if (settingsJsonPathTransferVar != "") ui->JSONpathLabel->setText(settingsJsonPathTransferVar);
+    ui->startupBehaviourCB->setChecked(autoMcStartupBehaviourTransferVar);
+    ui->shutdownBehaviourCB->setChecked(behaviourOnMcShutdownTransferVar);
     ui->staticMemoryOffsetTxt->setValidator(new QRegExpValidator(QRegExp("0[xX][0-9a-fA-F]+"), ui->staticMemoryOffsetTxt));
 }
 
@@ -61,6 +67,8 @@ void metaSettings::on_buttonBox_accepted()
     utils::writeConfigProperty("staticOffset", utils::decToHex(staticOffsetTransferVar));
     utils::writeConfigProperty("settingsJSONpath", settingsJsonPathTransferVar);
     utils::writeConfigProperty("presetValueBehaviour", presetValueBehaviourTransferVar);
+    utils::writeConfigProperty("autoMcStartupBehaviour", autoMcStartupBehaviourTransferVar);
+    utils::writeConfigProperty("behaviourOnMcShutdown", behaviourOnMcShutdownTransferVar);
 }
 
 void metaSettings::on_settingsJSONlocBtn_pressed()
@@ -70,5 +78,17 @@ void metaSettings::on_settingsJSONlocBtn_pressed()
     msgBox.setText("The new setting file's location will be saved as soon as you press OK. Please restart RenderBender afterwards for the changes to take effect.");
     msgBox.exec();
     ui->JSONpathLabel->setText(settingsJsonPathTransferVar);
+}
+
+
+void metaSettings::on_startupBehaviourCB_stateChanged(int arg1)
+{
+    autoMcStartupBehaviourTransferVar = (arg1>0);
+}
+
+
+void metaSettings::on_shutdownBehaviourCB_stateChanged(int arg1)
+{
+    behaviourOnMcShutdownTransferVar = (arg1>0);
 }
 

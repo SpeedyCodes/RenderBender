@@ -22,8 +22,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>408</width>
+    <height>376</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -32,8 +32,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>240</y>
+     <x>50</x>
+     <y>320</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -149,6 +149,32 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
    </property>
    <property name="text">
     <string>Pick file</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="startupBehaviourCB">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>220</y>
+     <width>301</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>At startup, also start Minecraft if it isn't running yet</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="shutdownBehaviourCB">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>250</y>
+     <width>381</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Automatically shut down RenderBender when Minecraft shuts down</string>
    </property>
   </widget>
  </widget>

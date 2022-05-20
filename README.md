@@ -34,6 +34,7 @@ Go to `File/Preferences` and set the static memory offset for your specific Mine
 - Beta 1.18.10: 0x44FF788
 - Beta 1.18.12: 0x44FF788
 - Release 1.18.30: 0x053D3188
+- Release 1.18.31: 0x053D61C8
 
 If your version isn't yet on the list, you'll have to ask the people in the previously mentioned Discord server for help. If you have a Cheat Engine Cheat Table, you can get it from there too, if you know how. 
 If this all sounds rather complicated: we are currently working on a way for RenderBender to detect the static memory offset automatically.

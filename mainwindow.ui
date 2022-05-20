@@ -95,6 +95,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     <addaction name="actionCEPresetImport"/>
     <addaction name="actionPreferences"/>
     <addaction name="actionExit"/>
+    <addaction name="actionAttach"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -167,6 +168,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   <action name="actionCEPresetImport">
    <property name="text">
     <string>Import old CE preset</string>
+   </property>
+  </action>
+  <action name="actionAttach">
+   <property name="text">
+    <string>Attach to target process</string>
    </property>
   </action>
  </widget>

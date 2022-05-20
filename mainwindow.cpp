@@ -39,12 +39,15 @@
 #include <QScreen>
 #include <QCompleter>
 #include <QLineEdit>
+#include<chrono>
+#include<thread>
 
 enum class settingType { INT, FLOAT, BOOL};
-HANDLE readPrep();
 DWORD GetProcessId(const wchar_t* procName);
 const int defaultSpinboxPrecision = 7;
 QWidget *fadeOutTarget;
+DWORD targetProcessID;
+HANDLE targetProcessHandle;
 class setting {
 public:
     char *displayName;
@@ -69,19 +72,17 @@ public:
     }
     template<typename T>
     void read(T& resultVar){
-        ReadProcessMemory(readPrep(), (BYTE*)addr, &resultVar, sizeof(resultVar), nullptr);
+        ReadProcessMemory(targetProcessHandle, (BYTE*)addr, &resultVar, sizeof(resultVar), nullptr);
         resetButton->setEnabled((float)resultVar != (float)defaultValue);
     }
     template <typename T>
     bool write(T& value)
     {
         T settingValue = 0;
-        DWORD procId = GetProcessId(L"Minecraft.Windows.exe");
-        HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, NULL, procId);
-        ReadProcessMemory(hProcess, (BYTE*)addr, &settingValue, sizeof(settingValue), nullptr);
+        ReadProcessMemory(targetProcessHandle, (BYTE*)addr, &settingValue, sizeof(settingValue), nullptr);
         if(settingValue == value){resetButton->setEnabled((float)settingValue != defaultValue); return true;} // value already correct, stop
-        WriteProcessMemory(hProcess, (BYTE*)addr, &value, sizeof(value), nullptr);
-        ReadProcessMemory(hProcess, (BYTE*)addr, &settingValue, sizeof(settingValue), nullptr);
+        WriteProcessMemory(targetProcessHandle, (BYTE*)addr, &value, sizeof(value), nullptr);
+        ReadProcessMemory(targetProcessHandle, (BYTE*)addr, &settingValue, sizeof(settingValue), nullptr);
         resetButton->setEnabled((float)settingValue != (float)defaultValue);
         return (settingValue == value); //value changed succesfully/failed to change value
     }
@@ -185,7 +186,8 @@ void MainWindow::temporaryHighlightFade() {
     fadeOutTarget = nullptr;
     return;
 }
-uintptr_t getBaseWorkingAddress(uintptr_t staticOffset);
+
+uintptr_t getBaseWorkingAddress(DWORD procId, HANDLE hProcess, uintptr_t staticOffset);
 uintptr_t computeSettingAddress(int settingIndex, uintptr_t base, QJsonObject &json);
 using namespace std;
 QJsonObject json;
@@ -199,27 +201,52 @@ bool changingUIvalues = false;
 bool allowedToBoot = true;
 int settingCount;
 QStringList settingNames;
+bool autoMcStartupBehaviour;
+int onMcShutdownBehaviour;
+QLabel* label;
+MainWindow* w;
+bool connectedToTargetProcess = false;
+
+void MainWindow::updateStatusBar(int targetMessage){
+    //targetMessage: 0->disconnected from mc process, 1->connected to mc process
+    statusBar()->removeWidget(label);
+    switch (targetMessage) {
+        case 0:
+            label = new QLabel("RenderBender " + utils::version + " feature testing #1" + " | Disconnected from target process");
+            statusBar()->addWidget(label);
+            connectedToTargetProcess = false;
+            break;
+        case 1:
+            label = new QLabel("RenderBender " + utils::version + " feature testing #1" + " | Connected to target process");
+            statusBar()->addWidget(label);
+            connectedToTargetProcess = true;
+            break;
+    }
+}
+void CALLBACK mcShutdownHandler(void* lpParameter, bool TimerOrWaitFired)
+{
+    if(onMcShutdownBehaviour == true){
+        QCoreApplication::quit();
+    }else if(onMcShutdownBehaviour == false){
+        emit w->statusbarsignal(0) ;
+    }
+}
 
 MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow)
 {
-    while(GetProcessId(L"Minecraft.Windows.exe") == 0){
-        QMessageBox msgBox;
-        msgBox.setText("The Minecraft process was not detected. Please start up Minecraft first and retry. Alternatively, press cancel to quit.");
-        msgBox.setStandardButtons(QMessageBox::Cancel | QMessageBox::Retry);
-        if(msgBox.exec() == QMessageBox::Cancel){
-            allowedToBoot = false;
-            return;
-        }
-    }
     ui->setupUi(this);
     connect(ui->selectJsonBtn, SIGNAL(clicked()), this, SLOT(selectJson()));
     QFile config(QCoreApplication::applicationDirPath() +"/config.json");
+    w = this;
+    connect(this, SIGNAL(statusbarsignal(int)), SLOT(updateStatusBar(int)));
     if(!config.exists()){
         QJsonObject jsonObject;
         jsonObject.insert("presetValueBehaviour", 1);
-        jsonObject.insert("staticOffset", "0x053D3188");
+        jsonObject.insert("staticOffset", "0x053D61C8");
+        jsonObject.insert("autoMcStartupBehaviour", false);
+        jsonObject.insert("behaviourOnMcShutdown", false);
         QMessageBox msgBox;
-        msgBox.setText("The 'Static memory offset' setting has been set to 0x053D3188, the correct value for the latest Minecraft release version at the time of writing, 1.18.30. As this value can change depending on what Minecraft version you are using, you may need to change it in File->Preferences if you are using another version. Please consult the Github README (click Help->Usage) to find the correct value for you.");
+        msgBox.setText("The 'Static memory offset' setting has been set to 0x053D61C8, the correct value for the latest Minecraft release version at the time of writing, 1.18.31. As this value can change depending on what Minecraft version you are using, you may need to change it in File->Preferences if you are using another version. Please consult the Github README (click Help->Usage) to find the correct value for you.");
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.exec();
         QJsonDocument jsonDoc;
@@ -228,18 +255,39 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
         config.write(jsonDoc.toJson());
     }
     config.close();
-    if(readPreferences()) {
+    readPreferences();
+    if(GetProcessId(L"Minecraft.Windows.exe") == 0 && autoMcStartupBehaviour){
+        utils::runMinecraft();
+        this_thread::sleep_for(chrono::milliseconds(10000));
+    }
+    attachToTargetProcess();
+    if(settingsJsonPath != "") {
         readJson(settingsJsonPath);
         GenerateUI();
         UIGenerated = true;
     }
-    QLabel* label = new QLabel("RenderBender v0.2.2");
-    statusBar()->addWidget(label);
 }
+
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+void MainWindow::attachToTargetProcess(){
+    targetProcessID = GetProcessId(L"Minecraft.Windows.exe");
+    if(targetProcessID == 0){
+        updateStatusBar(0);
+        return;
+    }
+    targetProcessHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, targetProcessID);
+    sunAzimuthAddress = getBaseWorkingAddress(targetProcessID,targetProcessHandle, staticOffset);
+    for (int i = 0; i < settingCount; i++) {
+        settings[i].updateAddr();
+    }
+    HANDLE hNewHandle;
+    RegisterWaitForSingleObject(&hNewHandle, targetProcessHandle , (WAITORTIMERCALLBACK)mcShutdownHandler, NULL, INFINITE, WT_EXECUTEONLYONCE);
+    on_actionReread_all_setting_values_triggered();
+    updateStatusBar(1);
 }
 void MainWindow::selectJson(){
     QString path = QFileDialog::getOpenFileName(this,tr("Open JSON"),  QStandardPaths::standardLocations(QStandardPaths::DownloadLocation).constFirst(), tr("JSON Files (*.json)"));
@@ -535,17 +583,18 @@ void MainWindow::on_actionExit_triggered()
 
 void MainWindow::on_actionPreferences_triggered()
 {
-    metasettings = new metaSettings(this, staticOffset, presetValueBehaviour, settingsJsonPath);
+    metasettings = new metaSettings(this, staticOffset, presetValueBehaviour, settingsJsonPath, autoMcStartupBehaviour, onMcShutdownBehaviour);
     metasettings->setModal(true);
     if(metasettings->exec() == QDialog::Accepted){
         readPreferences();
         for (int i = 0; i < settingCount; i++) {
             settings[i].updateAddr();
         }
+        sunAzimuthAddress = getBaseWorkingAddress(targetProcessID,targetProcessHandle, staticOffset);
         on_actionReread_all_setting_values_triggered();
     }
 }
-bool MainWindow::readPreferences(){
+void MainWindow::readPreferences(){
     QFile file(QCoreApplication::applicationDirPath() +"/config.json");
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QString rawText = file.readAll();
@@ -557,8 +606,8 @@ bool MainWindow::readPreferences(){
     staticOffset = utils::hexToDec(obj.value(QString("staticOffset")).toString());
     presetValueBehaviour = obj.value(QString("presetValueBehaviour")).toInt();
     settingsJsonPath = obj.value(QString("settingsJSONpath")).toString();
-    sunAzimuthAddress = getBaseWorkingAddress(staticOffset);
-    return (settingsJsonPath != "");
+    autoMcStartupBehaviour = obj.value(QString("autoMcStartupBehaviour")).toBool();
+    onMcShutdownBehaviour = obj.value(QString("behaviourOnMcShutdown")).toBool();
 }
 
 
@@ -569,7 +618,6 @@ void MainWindow::on_actionReread_all_setting_values_triggered()
     progress.setWindowModality(Qt::WindowModal);
     progress.setMinimumDuration(500);
     progress.setCancelButton(nullptr);
-    sunAzimuthAddress = getBaseWorkingAddress(staticOffset);
     for (int i = 0; i < settingCount; i++) {
         switch (settings[i].type) {
             case settingType::FLOAT:{
@@ -723,5 +771,11 @@ void MainWindow::on_actionCEPresetImport_triggered()
     if(msgBox.exec() == QMessageBox::Yes){
         on_actionSetPresetValues_triggered();
     }
+}
+
+
+void MainWindow::on_actionAttach_triggered()
+{
+    attachToTargetProcess();
 }
 

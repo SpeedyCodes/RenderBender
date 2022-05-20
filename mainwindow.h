@@ -7,6 +7,7 @@
 #include <QMainWindow>
 #include <metasettings.h>
 #include <savepresetdialog.h>
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -14,7 +15,8 @@ QT_END_NAMESPACE
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-
+signals:
+    void statusbarsignal(int i);
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
@@ -22,13 +24,15 @@ public:
     void readJson(QString path);
     void GenerateUI();
     bool allowedToBoot;
+public slots:
+    void updateStatusBar(int targetMessage);
 private slots:
     void selectJson();
     void onSettingValueChanged(int i);
     void onSettingValueChanged(double i);
     void on_actionExit_triggered();
     void on_actionPreferences_triggered();
-    bool readPreferences();
+    void readPreferences();
     void on_actionReread_all_setting_values_triggered();
     void on_actionSetPresetValues_triggered();
     void onResetToPresetButtonClicked();
@@ -36,8 +40,9 @@ private slots:
     void on_actionSave_preset_triggered();
     void temporaryHighlightFade();
     void on_actionUsage_triggered();
-
     void on_actionCEPresetImport_triggered();
+    void attachToTargetProcess();
+    void on_actionAttach_triggered();
 
 private:
     Ui::MainWindow *ui;

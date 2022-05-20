@@ -20,6 +20,10 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QFile>
+#include <windows.h>
+
+QString utils::version = "v0.3.0";
+
 uintptr_t utils::hexToDec(QString hex){
     QByteArray ba = hex.toLocal8Bit();
     const char *Addr = ba.data();
@@ -31,5 +35,9 @@ uintptr_t utils::hexToDec(QString hex){
 }
 QString utils::decToHex(uintptr_t dec){
     return "0x" + QString::number( dec, 16 );
+}
+void utils::runMinecraft(){
+    LPCWSTR url = L"explorer.exe";
+    ShellExecute(NULL, L"open", url, L"shell:appsFolder\\Microsoft.MinecraftUWP_8wekyb3d8bbwe!App", NULL, SW_SHOWNORMAL);
 }
 
