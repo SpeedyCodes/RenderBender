@@ -35,6 +35,7 @@ Go to `File/Preferences` and set the static memory offset for your specific Mine
 - Beta 1.18.12: 0x44FF788
 - Release 1.18.30: 0x053D3188
 - Release 1.18.31: 0x053D61C8
+- Release 1.18.0: 0x0411AB28
 
 If your version isn't yet on the list, you'll have to ask the people in the previously mentioned Discord server for help. If you have a Cheat Engine Cheat Table, you can get it from there too, if you know how. 
 If this all sounds rather complicated: we are currently working on a way for RenderBender to detect the static memory offset automatically.
@@ -55,14 +56,15 @@ If you want to use a preset from the #rtx-presets channel of the Minecraft RTX D
 These are the planned features for the next few updates. While they are all considered necessary and valuable additions, their order may still change in the future.
 
 ##### 0.3 release
+- A rework of the way settings and presets are stored and read
 - Installation program made available besides the .zip file
 - Automatic start-up with Minecraft
 - Minimize to system tray
-- Automatic reading of the static memory offset (could be postponed)
 ##### 0.3.1 update
 - Descriptions + example images
 
 More features are to come in the more distant future, such as
+- Automatic reading of the static memory offset
 - A layer system for presets
 - User-made scripts for custom behaviour (i.e. wet ground during rain)
     - Disable sky brightness, sun brightness gradually when below certain y-value

@@ -24,6 +24,9 @@
 QStringList settingNamesDuplicate;
 std::vector<bool> activeSettings;
 std::vector<float> settingValues;
+bool titleGiven = false;
+bool settingsParsed = false;
+QString title;
 
 oldCEPresetImportdialog::oldCEPresetImportdialog(QWidget *parent, QStringList *names) : QDialog(parent), 
 ui(new Ui::oldCEPresetImportdialog)
@@ -65,6 +68,7 @@ void oldCEPresetImportdialog::on_stringInput_textChanged()
     {
         ui->validationResultLabel->setText("The number of setting names is not equal to the number of setting values (did you forget a comma?)");
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+        settingsParsed = false;
         return;
     }
     for (int i = 0; i < names.size(); i++)
@@ -73,6 +77,7 @@ void oldCEPresetImportdialog::on_stringInput_textChanged()
         {
             ui->validationResultLabel->setText("The setting " + names[i] + " was not found as a setting name.");
             ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+            settingsParsed = false;
             return;
         }
     }
@@ -93,6 +98,29 @@ void oldCEPresetImportdialog::on_stringInput_textChanged()
             settingValues.push_back(0);
         }
     }
-    ui->validationResultLabel->setText(QString::number(names.size()) + " settings ready to be saved correctly.");
-    ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+    settingsParsed = true;
+    if(!titleGiven){
+        ui->validationResultLabel->setText("Please enter a title for the new preset.");
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+    }else{
+        ui->validationResultLabel->setText("Preset ready to be saved correctly.");
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+        on_titleInput_textChanged(ui->titleInput->text());
+    }
 }
+
+void oldCEPresetImportdialog::on_titleInput_textChanged(const QString &arg1)
+{
+    title = arg1;
+    if(arg1 == ""){
+        ui->validationResultLabel->setText("Please enter a title for the new preset.");
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+        titleGiven = false;
+    }else if(settingsParsed){
+        ui->validationResultLabel->setText("Preset ready to be saved correctly.");
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+    }else{
+        on_stringInput_textChanged();
+    }
+}
+

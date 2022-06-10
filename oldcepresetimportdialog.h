@@ -21,9 +21,12 @@ public:
     std::vector<float> settingValues;
     ~oldCEPresetImportdialog();
     void getResults();
+    QString title;
 
 private slots:
     void on_stringInput_textChanged();
+
+    void on_titleInput_textChanged(const QString &arg1);
 
 private:
     Ui::oldCEPresetImportdialog *ui;

@@ -19,7 +19,7 @@
 #include "qdebug.h"
 
 std::vector<QListWidgetItem*> listCheckBoxes;
-
+QString titleTransferVar;
 savePresetDialog::savePresetDialog(QWidget *parent, QStringList *names, std::vector<bool> enabledPresets) :
     QDialog(parent),
     ui(new Ui::savePresetDialog)
@@ -31,6 +31,7 @@ savePresetDialog::savePresetDialog(QWidget *parent, QStringList *names, std::vec
         else listItem->setCheckState(Qt::Unchecked);
         listCheckBoxes.push_back(listItem);
     }
+    ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 }
 
 std::vector<bool> savePresetDialog::readToggles(){
@@ -59,5 +60,12 @@ void savePresetDialog::on_disableAllBtn_clicked()
     for (int i = 0;i < listCheckBoxes.size();i++) {
         listCheckBoxes[i]->setCheckState(Qt::Unchecked);
     }
+}
+
+
+void savePresetDialog::on_titleInput_textChanged(const QString &arg1)
+{
+    titleTransferVar = arg1;
+    ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(arg1 != "");
 }
 

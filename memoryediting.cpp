@@ -86,12 +86,10 @@ uintptr_t FindDMAAddress(HANDLE hProc, uintptr_t ptr, std::vector<unsigned int> 
     }
     return addr;
 }
-uintptr_t getBaseWorkingAddress(DWORD procId, HANDLE hProcess, uintptr_t staticOffset){
+uintptr_t getBaseWorkingAddress(DWORD procId, HANDLE hProcess, uintptr_t staticOffset, std::vector<unsigned int> baseOffsetList){
     uintptr_t moduleBase = GetModuleBaseAddress(procId, L"Minecraft.Windows.exe");
     uintptr_t dynamicPtrBaseAddr = moduleBase + staticOffset;
-
-    std::vector<unsigned int> baseOffsets = { 0x40, 0xA0, 0xC0, 0xDC };
-    return FindDMAAddress(hProcess, dynamicPtrBaseAddr, baseOffsets);
+    return FindDMAAddress(hProcess, dynamicPtrBaseAddr, baseOffsetList);
 }
 uintptr_t computeSettingAddress(int settingIndex, uintptr_t base, QJsonObject &json){
     QJsonArray settings = json.value(QString("settings")).toArray();

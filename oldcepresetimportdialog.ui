@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>400</height>
+    <height>474</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -33,7 +33,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>350</y>
+     <y>430</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -49,9 +49,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
    <property name="geometry">
     <rect>
      <x>50</x>
-     <y>-10</y>
+     <y>100</y>
      <width>300</width>
-     <height>151</height>
+     <height>81</height>
     </rect>
    </property>
    <property name="text">
@@ -65,7 +65,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
    <property name="geometry">
     <rect>
      <x>50</x>
-     <y>120</y>
+     <y>200</y>
      <width>300</width>
      <height>150</height>
     </rect>
@@ -75,7 +75,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
    <property name="geometry">
     <rect>
      <x>50</x>
-     <y>280</y>
+     <y>360</y>
      <width>300</width>
      <height>61</height>
     </rect>
@@ -85,6 +85,29 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
    </property>
    <property name="wordWrap">
     <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="titleInput">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>60</y>
+     <width>300</width>
+     <height>24</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>30</y>
+     <width>81</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Preset title:</string>
    </property>
   </widget>
  </widget>

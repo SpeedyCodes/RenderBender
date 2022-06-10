@@ -17,11 +17,14 @@ public:
     explicit savePresetDialog(QWidget *parent = nullptr, QStringList *names = new QStringList(), std::vector<bool> enabledPresets = {});
     std::vector<bool> readToggles();
     ~savePresetDialog();
+    QString titleTransferVar;
 
 private slots:
     void on_enableAllBtn_clicked();
 
     void on_disableAllBtn_clicked();
+
+    void on_titleInput_textChanged(const QString &arg1);
 
 private:
     Ui::savePresetDialog *ui;

@@ -93,9 +93,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
      <string>File</string>
     </property>
     <addaction name="actionCEPresetImport"/>
+    <addaction name="actionAttach"/>
     <addaction name="actionPreferences"/>
     <addaction name="actionExit"/>
-    <addaction name="actionAttach"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -107,8 +107,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     <property name="title">
      <string>Edit</string>
     </property>
-    <addaction name="actionSetPresetValues"/>
+    <widget class="QMenu" name="menuLoad_stored_preset">
+     <property name="title">
+      <string>Load stored preset</string>
+     </property>
+    </widget>
+    <addaction name="actionSetDefaultValues"/>
     <addaction name="actionSave_preset"/>
+    <addaction name="menuLoad_stored_preset"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -142,9 +148,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     <string>Select new settings JSON file</string>
    </property>
   </action>
-  <action name="actionSetPresetValues">
+  <action name="actionSetDefaultValues">
    <property name="text">
-    <string>Reset all to preset value</string>
+    <string>Reset all to default value</string>
    </property>
   </action>
   <action name="actionSave_preset">
@@ -173,6 +179,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   <action name="actionAttach">
    <property name="text">
     <string>Attach to target process</string>
+   </property>
+  </action>
+  <action name="actiontest">
+   <property name="text">
+    <string>test</string>
    </property>
   </action>
  </widget>

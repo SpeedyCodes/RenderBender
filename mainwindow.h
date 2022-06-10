@@ -26,15 +26,15 @@ public:
     bool allowedToBoot;
 public slots:
     void updateStatusBar(int targetMessage);
+    void loadPreset();
 private slots:
     void selectJson();
     void onSettingValueChanged(int i);
     void onSettingValueChanged(double i);
     void on_actionExit_triggered();
     void on_actionPreferences_triggered();
-    void readPreferences();
+    void readPreferences(bool onlyPresets = false);
     void on_actionReread_all_setting_values_triggered();
-    void on_actionSetPresetValues_triggered();
     void onResetToPresetButtonClicked();
     void onSliderValueChanged(int index);
     void on_actionSave_preset_triggered();
@@ -43,6 +43,8 @@ private slots:
     void on_actionCEPresetImport_triggered();
     void attachToTargetProcess();
     void on_actionAttach_triggered();
+    void on_actionSetDefaultValues_triggered();
+    void RecalculateBaseAdresses();
 
 private:
     Ui::MainWindow *ui;
