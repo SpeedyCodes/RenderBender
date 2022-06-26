@@ -20,15 +20,14 @@
 
 std::vector<QListWidgetItem*> listCheckBoxes;
 QString titleTransferVar;
-savePresetDialog::savePresetDialog(QWidget *parent, QStringList *names, std::vector<bool> enabledPresets) :
+savePresetDialog::savePresetDialog(QWidget *parent, QStringList *names) :
     QDialog(parent),
     ui(new Ui::savePresetDialog)
 {
     ui->setupUi(this);
     for (int i = 0;i < names->length();i++) {
         QListWidgetItem *listItem = new QListWidgetItem(names->at(i),ui->settingList);
-        if (enabledPresets[i])listItem->setCheckState(Qt::Checked);
-        else listItem->setCheckState(Qt::Unchecked);
+        listItem->setCheckState(Qt::Unchecked);
         listCheckBoxes.push_back(listItem);
     }
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);

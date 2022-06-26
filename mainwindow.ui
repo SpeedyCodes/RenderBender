@@ -94,6 +94,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     </property>
     <addaction name="actionCEPresetImport"/>
     <addaction name="actionAttach"/>
+    <addaction name="actionRestartProcess"/>
     <addaction name="actionPreferences"/>
     <addaction name="actionExit"/>
    </widget>
@@ -112,9 +113,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
       <string>Load stored preset</string>
      </property>
     </widget>
+    <widget class="QMenu" name="menuDelete_preset">
+     <property name="title">
+      <string>Delete preset</string>
+     </property>
+    </widget>
     <addaction name="actionSetDefaultValues"/>
     <addaction name="actionSave_preset"/>
     <addaction name="menuLoad_stored_preset"/>
+    <addaction name="menuDelete_preset"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -181,9 +188,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     <string>Attach to target process</string>
    </property>
   </action>
-  <action name="actiontest">
+  <action name="actionRestartProcess">
    <property name="text">
-    <string>test</string>
+    <string>Restart target process</string>
    </property>
   </action>
  </widget>

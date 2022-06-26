@@ -35,7 +35,8 @@ Go to `File/Preferences` and set the static memory offset for your specific Mine
 - Beta 1.18.12: 0x44FF788
 - Release 1.18.30: 0x053D3188
 - Release 1.18.31: 0x053D61C8
-- Release 1.18.0: 0x0411AB28
+- Release 1.19.0: 0x0411AB28
+- Release 1.19.2: 0x04177558
 
 If your version isn't yet on the list, you'll have to ask the people in the previously mentioned Discord server for help. If you have a Cheat Engine Cheat Table, you can get it from there too, if you know how. 
 If this all sounds rather complicated: we are currently working on a way for RenderBender to detect the static memory offset automatically.
@@ -59,9 +60,11 @@ These are the planned features for the next few updates. While they are all cons
 - A rework of the way settings and presets are stored and read
 - Installation program made available besides the .zip file
 - Automatic start-up with Minecraft
-- Minimize to system tray
 ##### 0.3.1 update
 - Descriptions + example images
+##### 0.4 update
+- Minimize to system tray
+- Keybinds to toggle presets
 
 More features are to come in the more distant future, such as
 - Automatic reading of the static memory offset
@@ -71,7 +74,6 @@ More features are to come in the more distant future, such as
     - Smoothertron during and possibly after rain.
 - Snapping sliders to default and round numbers (toggleable)
 - Setting descriptions and example images
-- Keybinds to toggle presets
 - Dimension-specific presets
 - Editing radian values as if they were degrees
 ## Licenses

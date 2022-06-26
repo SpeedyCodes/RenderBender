@@ -26,9 +26,11 @@ public:
     bool allowedToBoot;
 public slots:
     void updateStatusBar(int targetMessage);
-    void loadPreset();
+    void loadPreset(int index);
+    void deletePreset();
 private slots:
     void selectJson();
+    void loadPresetFromButton();
     void onSettingValueChanged(int i);
     void onSettingValueChanged(double i);
     void on_actionExit_triggered();
@@ -45,6 +47,8 @@ private slots:
     void on_actionAttach_triggered();
     void on_actionSetDefaultValues_triggered();
     void RecalculateBaseAdresses();
+
+    void on_actionRestartProcess_triggered();
 
 private:
     Ui::MainWindow *ui;

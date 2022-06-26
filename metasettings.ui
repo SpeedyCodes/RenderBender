@@ -71,42 +71,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   <widget class="QComboBox" name="presValBehBox">
    <property name="geometry">
     <rect>
-     <x>20</x>
+     <x>160</x>
      <y>190</y>
      <width>72</width>
      <height>22</height>
     </rect>
    </property>
    <property name="currentIndex">
-    <number>1</number>
-   </property>
-   <item>
-    <property name="text">
-     <string>Disabled</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Ask</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Enabled</string>
-    </property>
-   </item>
-  </widget>
-  <widget class="QLabel" name="label_2">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>170</y>
-     <width>211</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Change values to presets at startup</string>
+    <number>-1</number>
    </property>
   </widget>
   <widget class="QLabel" name="label_3">
@@ -175,6 +147,19 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
    </property>
    <property name="text">
     <string>Automatically shut down RenderBender when Minecraft shuts down</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="loadPresetcheckBox">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>190</y>
+     <width>141</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Load preset at startup</string>
    </property>
   </widget>
  </widget>

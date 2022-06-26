@@ -15,13 +15,14 @@ class metaSettings : public QDialog
     Q_OBJECT
 
 public:
-    explicit metaSettings(QWidget *parent = nullptr, uintptr_t statOff = 0, int presValBeh = -1, QString settingsJsonPath = "", bool autoMcStartupBehaviour = false, bool behaviourOnMcShutdown = false);
+    explicit metaSettings(QWidget *parent = nullptr, uintptr_t statOff = 0, bool presValBeh = false, QString settingsJsonPath = "", bool autoMcStartupBehaviour = false, bool behaviourOnMcShutdown = false, int defaultPreset = 0, QStringList presetNames = {});
     ~metaSettings();
     uintptr_t staticOffsetTransferVar;
-    int presetValueBehaviourTransferVar;
+    bool presetValueBehaviourTransferVar;
     QString settingsJsonPathTransferVar;
     bool autoMcStartupBehaviourTransferVar;
     bool behaviourOnMcShutdownTransferVar;
+    int defaultPresetTransferVar;
 
 private slots:
     void on_staticMemoryOffsetTxt_textChanged(const QString &arg1);
@@ -34,6 +35,8 @@ private slots:
     void on_startupBehaviourCB_stateChanged(int arg1);
 
     void on_shutdownBehaviourCB_stateChanged(int arg1);
+
+    void on_loadPresetcheckBox_stateChanged(int arg1);
 
 private:
     Ui::metaSettings *ui;

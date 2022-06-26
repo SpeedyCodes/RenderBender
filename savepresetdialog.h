@@ -14,7 +14,7 @@ class savePresetDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit savePresetDialog(QWidget *parent = nullptr, QStringList *names = new QStringList(), std::vector<bool> enabledPresets = {});
+    explicit savePresetDialog(QWidget *parent = nullptr, QStringList *names = new QStringList());
     std::vector<bool> readToggles();
     ~savePresetDialog();
     QString titleTransferVar;

@@ -39,8 +39,9 @@
 #include <QScreen>
 #include <QCompleter>
 #include <QLineEdit>
-#include<chrono>
-#include<thread>
+#include <chrono>
+#include <thread>
+#include <QTime>
 
 enum class settingType { INT, FLOAT, BOOL};
 DWORD GetProcessId(const wchar_t* procName);
@@ -155,7 +156,7 @@ uintptr_t computeSettingAddress(int settingIndex, uintptr_t base, QJsonObject &j
 QJsonObject json;
 vector<setting> settings;
 uintptr_t staticOffset;
-int presetValueBehaviour;
+bool presetValueBehaviour;
 bool UIGenerated = false;
 QString settingsJsonPath = "";
 bool changingUIvalues = false;
@@ -171,18 +172,19 @@ QStringList presetTitles;
 vector<vector<float>> presetValues;
 vector<QStringList> presetSettingNames;
 vector<vector<unsigned int>> basePointers = {};
+int defaultPreset;
 
 void MainWindow::updateStatusBar(int targetMessage){
     //targetMessage: 0->disconnected from mc process, 1->connected to mc process
     statusBar()->removeWidget(label);
     switch (targetMessage) {
         case 0:
-            label = new QLabel("RenderBender " + utils::version + " feature testing #2" + " | Disconnected from target process");
+            label = new QLabel("RenderBender " + utils::version + " feature testing #3" + " | Disconnected from target process");
             statusBar()->addWidget(label);
             connectedToTargetProcess = false;
             break;
         case 1:
-            label = new QLabel("RenderBender " + utils::version + " feature testing #2" + " | Connected to target process");
+            label = new QLabel("RenderBender " + utils::version + " feature testing #3" + " | Connected to target process");
             statusBar()->addWidget(label);
             connectedToTargetProcess = true;
             break;
@@ -206,12 +208,13 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     connect(this, SIGNAL(statusbarsignal(int)), SLOT(updateStatusBar(int)));
     if(!config.exists()){
         QJsonObject jsonObject;
-        jsonObject.insert("presetValueBehaviour", 1);
-        jsonObject.insert("staticOffset", "0x053D61C8");
+        jsonObject.insert("presetValueBehaviour", false);
+        jsonObject.insert("staticOffset", "0x04177558");
         jsonObject.insert("autoMcStartupBehaviour", false);
         jsonObject.insert("behaviourOnMcShutdown", false);
+        jsonObject.insert("defaultPresetIndex", 0);
         QMessageBox msgBox;
-        msgBox.setText("The 'Static memory offset' setting has been set to 0x053D61C8, the correct value for the latest Minecraft release version at the time of writing, 1.18.31. As this value can change depending on what Minecraft version you are using, you may need to change it in File->Preferences if you are using another version. Please consult the Github README (click Help->Usage) to find the correct value for you.");
+        msgBox.setText("The 'Static memory offset' setting has been set to 0x04177558, the correct value for the latest Minecraft release version at the time of writing, 1.19.2. As this value can change depending on what Minecraft version you are using, you may need to change it in File->Preferences if you are using another version. Please consult the Github README (click Help->Usage) to find the correct value for you.");
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.exec();
         QJsonDocument jsonDoc;
@@ -349,7 +352,6 @@ void MainWindow::GenerateUI(){
     progress.setMinimumDuration(500);
     progress.setCancelButton(nullptr);
     QStringList groupNames;
-    vector<bool> enabledPresets = {};
     changingUIvalues = true;
     for (int i = 0; i < settingsJson.count(); i++) {
         progress.setValue(i);
@@ -384,7 +386,6 @@ void MainWindow::GenerateUI(){
         QJsonValue defaultValObj = obj.value(QString("default"));
         bool hasDefault = (defaultValObj.toString() != "null");
         float defaultVal = defaultValObj.toDouble();
-        enabledPresets.push_back(hasDefault);
         QWidget *widget;
         QPushButton *resetButton = new QPushButton();
         resetButton->setText("Reset");
@@ -411,7 +412,7 @@ void MainWindow::GenerateUI(){
 
             int min = obj.value(QString("min")).toInt();
             int max = obj.value(QString("max")).toInt();
-            setting s(0, obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
+            setting s(obj.value(QString("pointerIndex")).toInt(), obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
             groupIndex, defaultVal, min,
             max, i,  settingType::INT, spinBox, resetButton, slider, hasDefault);
             settings.push_back(s);
@@ -452,7 +453,7 @@ void MainWindow::GenerateUI(){
 
             float min = obj.value(QString("min")).toDouble();
             float max = obj.value(QString("max")).toDouble();
-            setting s(0, obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
+            setting s(obj.value(QString("pointerIndex")).toInt(), obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
             groupIndex,defaultVal, min,
             max, i, settingType::FLOAT, spinBox, resetButton, slider, hasDefault);
             settings.push_back(s);
@@ -488,7 +489,7 @@ void MainWindow::GenerateUI(){
             QHBoxLayout *la = new QHBoxLayout();
             QCheckBox *cb = new QCheckBox(infoText);
 
-            setting s(0, obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
+            setting s(obj.value(QString("pointerIndex")).toInt(), obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
             groupIndex, defaultVal == 1, false,
             true, i, settingType::BOOL, cb, resetButton, nullptr, hasDefault);
             settings.push_back(s);
@@ -534,20 +535,13 @@ void MainWindow::GenerateUI(){
         QTimer::singleShot(1000, this, SLOT(temporaryHighlightFade()));
 });
 
-    savepresetdialog = new savePresetDialog(this, &settingNames, enabledPresets);
+    savepresetdialog = new savePresetDialog(this, &settingNames);
     savepresetdialog->setModal(true);
     progress.setValue(settingsJson.count());
-    if(presetValueBehaviour == 2){
-        //on_actionSetPresetValues_triggered();
-    }else if(presetValueBehaviour == 1){
-        QMessageBox msgBox;
-        msgBox.setText("Would you like to set all the values to their presets now? (you can always do this later from Edit->Reset all to preset value)");
-        msgBox.setStandardButtons(QMessageBox::No | QMessageBox::Yes);
-        if(msgBox.exec() == QMessageBox::Yes){
-            //on_actionSetPresetValues_triggered();
-        }
+    if(presetValueBehaviour){
+        loadPreset(defaultPreset);
     }
-    resize(QGuiApplication::primaryScreen()->availableGeometry().size() * 0.5);
+    resize(QGuiApplication::primaryScreen()->availableGeometry().size() * 0.6);
     UIGenerated = true;
 }
 
@@ -558,7 +552,7 @@ void MainWindow::on_actionExit_triggered()
 
 void MainWindow::on_actionPreferences_triggered()
 {
-    metasettings = new metaSettings(this, staticOffset, presetValueBehaviour, settingsJsonPath, autoMcStartupBehaviour, onMcShutdownBehaviour);
+    metasettings = new metaSettings(this, staticOffset, presetValueBehaviour, settingsJsonPath, autoMcStartupBehaviour, onMcShutdownBehaviour, defaultPreset, presetTitles);
     metasettings->setModal(true);
     if(metasettings->exec() == QDialog::Accepted){
         readPreferences();
@@ -579,24 +573,31 @@ void MainWindow::readPreferences(bool onlyPresets){
     //TODO: handle incomplete config files properly
     //if(!(obj.contains("staticOffset")*obj.contains("presetValueBehaviour")*obj.contains("settingsJSONpath"))) return false;
     QJsonArray presets = obj.value(QString("presets")).toArray();
-    int presetCounter = 0;
-    if(onlyPresets) presetCounter = presets.size()-1;
-    else{
+    QMenu * m_load = ui->menuLoad_stored_preset;
+    QMenu * m_delete = ui->menuDelete_preset;
+    presetTitles.clear();
+    m_load->clear();
+    m_delete->clear();
+    presetValues.clear();
+    presetSettingNames.clear();
+    if(!onlyPresets){
     staticOffset = utils::hexToDec(obj.value(QString("staticOffset")).toString());
-    presetValueBehaviour = obj.value(QString("presetValueBehaviour")).toInt();
+    presetValueBehaviour = obj.value(QString("presetValueBehaviour")).toBool();
     settingsJsonPath = obj.value(QString("settingsJSONpath")).toString();
     autoMcStartupBehaviour = obj.value(QString("autoMcStartupBehaviour")).toBool();
     onMcShutdownBehaviour = obj.value(QString("behaviourOnMcShutdown")).toBool();
+    defaultPreset = obj.value(QString("defaultPresetIndex")).toInt();
     }
-    QMenu * m = ui->menuLoad_stored_preset;
-    for(;presetCounter < presets.size(); presetCounter++){
+    for(int presetCounter = 0;presetCounter < presets.size(); presetCounter++){
         vector<float> values;
         QStringList names;
         QJsonObject preset = presets[presetCounter].toObject();
         QString title = preset.value(QString("title")).toString();
         presetTitles.push_back(title);
-        QAction* action = m->addAction(title);
-        connect(action, SIGNAL(triggered()), SLOT(loadPreset()));
+        QAction* action_load = m_load->addAction(title);
+        QAction* action_delete = m_delete->addAction(title);
+        connect(action_load, SIGNAL(triggered()), SLOT(loadPresetFromButton()));
+        connect(action_delete, SIGNAL(triggered()), SLOT(deletePreset()));
         QJsonObject valuesObject = preset.value(QString("values")).toObject();
         QStringList keys = valuesObject.keys();
         for(int j = 0; j < keys.size(); j++){
@@ -727,7 +728,7 @@ void MainWindow::on_actionCEPresetImport_triggered()
         settingValues = dialog->settingValues;
     } else return;
 
-    QProgressDialog progress("Saving current values as the new preset...", "stop", 0, settingCount, this);
+    QProgressDialog progress("Saving Lua string as the new preset...", "stop", 0, settingCount, this);
     progress.setWindowModality(Qt::WindowModal);
     progress.setMinimumDuration(500);
     progress.setCancelButton(nullptr);
@@ -774,10 +775,10 @@ void MainWindow::on_actionCEPresetImport_triggered()
     msgBox.setText("The new preset has been saved.");
     msgBox.setStandardButtons(QMessageBox::Ok);
     msgBox.exec();
-    msgBox.setText("Would you like to set all the values to their presets now? (you can always do this later from Edit->Reset all to preset value)");
+    msgBox.setText("Would you like to apply this new preset immediately? (you can always do this later from Edit->Load Preset->...)");
     msgBox.setStandardButtons(QMessageBox::No | QMessageBox::Yes);
     if(msgBox.exec() == QMessageBox::Yes){
-        //on_actionSetPresetValues_triggered();
+        loadPreset(presetTitles.size()-1);
     }
 }
 
@@ -786,10 +787,14 @@ void MainWindow::on_actionAttach_triggered()
 {
     attachToTargetProcess();
 }
-void MainWindow::loadPreset(){
-    changingUIvalues = true;
+void MainWindow::loadPresetFromButton(){
     QAction* a = (QAction*)sender();
-    int presetIndex = presetTitles.indexOf(a->text());
+    loadPreset(presetTitles.indexOf(a->text()));
+}
+void MainWindow::loadPreset(int index){
+    on_actionReread_all_setting_values_triggered();
+    changingUIvalues = true;
+    int presetIndex = index;
     for(int i = 0; i < settingCount; i++){
         int settingIndex = presetSettingNames[presetIndex].indexOf(settings[i].displayName);
         if(settingIndex == -1){
@@ -825,7 +830,30 @@ void MainWindow::loadPreset(){
         }
     }
     changingUIvalues = false;
+}
 
+void MainWindow::deletePreset(){
+    QAction* a = (QAction*)sender();
+    int presetIndex = presetTitles.indexOf(a->text());
+    presetTitles.erase(presetTitles.begin() + presetIndex);
+    ui->menuLoad_stored_preset->removeAction(ui->menuLoad_stored_preset->actions().at(presetIndex));
+    ui->menuDelete_preset->removeAction(ui->menuDelete_preset->actions().at(presetIndex));
+    presetValues.erase(presetValues.begin() + presetIndex);
+    presetSettingNames.erase(presetSettingNames.begin() + presetIndex);
+
+    QFile file(QCoreApplication::applicationDirPath() +"/config.json");
+    file.open(QIODevice::ReadWrite | QIODevice::Text);
+    QString rawText = file.readAll();
+    QJsonDocument document = QJsonDocument::fromJson(rawText.toUtf8());
+    QJsonObject jsonObject = document.object();
+    QJsonArray presets = jsonObject.value(QString("presets")).toArray();
+    presets.erase(presets.begin() + presetIndex);
+    jsonObject.insert("presets", presets);
+    QJsonDocument jsonDoc;
+    jsonDoc.setObject(jsonObject);
+    file.resize(0);
+    file.write(jsonDoc.toJson());
+    file.close();
 }
 
 
@@ -849,5 +877,14 @@ void MainWindow::RecalculateBaseAdresses(){
     for(int i = 0; i < basePointers.size(); i++){
         baseAdresses.push_back(getBaseWorkingAddress(targetProcessID,targetProcessHandle, staticOffset, basePointers[i]));
     }
+}
+
+void MainWindow::on_actionRestartProcess_triggered()
+{
+    WinExec("taskkill /IM Minecraft.Windows.exe /F", SW_HIDE);
+    this_thread::sleep_for(chrono::milliseconds(1000));
+    utils::runMinecraft();
+    this_thread::sleep_for(chrono::milliseconds(10000));
+    attachToTargetProcess();
 }
 

@@ -25,11 +25,13 @@
 #include <QMessageBox>
 
 uintptr_t staticOffsetTransferVar;
-int presetValueBehaviourTransferVar;
+bool loadPresetOnStartupTransferVar;
+bool presetValueBehaviourTransferVar;
 QString settingsJsonPathTransferVar = "";
 bool autoMcStartupBehaviourTransferVar;
 bool behaviourOnMcShutdownTransferVar;
-metaSettings::metaSettings(QWidget *parent, uintptr_t statOff, int presValBeh, QString settingsJsonPath, bool autoMcStartupBehaviour, bool behaviourOnMcShutdown):
+int defaultPresetTransferVar;
+metaSettings::metaSettings(QWidget *parent, uintptr_t statOff, bool presValBeh, QString settingsJsonPath, bool autoMcStartupBehaviour, bool behaviourOnMcShutdown, int defaultPreset, QStringList presetNames):
     QDialog(parent),
     ui(new Ui::metaSettings)
 {
@@ -39,12 +41,17 @@ metaSettings::metaSettings(QWidget *parent, uintptr_t statOff, int presValBeh, Q
     settingsJsonPathTransferVar = settingsJsonPath;
     autoMcStartupBehaviourTransferVar = autoMcStartupBehaviour;
     behaviourOnMcShutdownTransferVar = behaviourOnMcShutdown;
+    for(int i = 0; i < presetNames.size(); i++){
+        ui->presValBehBox->addItem(presetNames[i]);
+    }
+    defaultPresetTransferVar = defaultPreset;
     if (staticOffsetTransferVar != 0) ui->staticMemoryOffsetTxt->setText(utils::decToHex(staticOffsetTransferVar));
-    if (presetValueBehaviourTransferVar != -1) ui->presValBehBox->setCurrentIndex(presetValueBehaviourTransferVar);
+    ui->presValBehBox->setCurrentIndex(defaultPresetTransferVar);
     if (settingsJsonPathTransferVar != "") ui->JSONpathLabel->setText(settingsJsonPathTransferVar);
     ui->startupBehaviourCB->setChecked(autoMcStartupBehaviourTransferVar);
     ui->shutdownBehaviourCB->setChecked(behaviourOnMcShutdownTransferVar);
     ui->staticMemoryOffsetTxt->setValidator(new QRegExpValidator(QRegExp("0[xX][0-9a-fA-F]+"), ui->staticMemoryOffsetTxt));
+    ui->loadPresetcheckBox->setChecked(presetValueBehaviourTransferVar);
 }
 
 metaSettings::~metaSettings()
@@ -59,7 +66,7 @@ void metaSettings::on_staticMemoryOffsetTxt_textChanged(const QString &arg1)
 
 void metaSettings::on_presValBehBox_currentIndexChanged(int index)
 {
-    presetValueBehaviourTransferVar = index;
+    defaultPresetTransferVar = index;
 }
 
 void metaSettings::on_buttonBox_accepted()
@@ -69,6 +76,7 @@ void metaSettings::on_buttonBox_accepted()
     utils::writeConfigProperty("presetValueBehaviour", presetValueBehaviourTransferVar);
     utils::writeConfigProperty("autoMcStartupBehaviour", autoMcStartupBehaviourTransferVar);
     utils::writeConfigProperty("behaviourOnMcShutdown", behaviourOnMcShutdownTransferVar);
+    utils::writeConfigProperty("defaultPresetIndex", defaultPresetTransferVar);
 }
 
 void metaSettings::on_settingsJSONlocBtn_pressed()
@@ -90,5 +98,11 @@ void metaSettings::on_startupBehaviourCB_stateChanged(int arg1)
 void metaSettings::on_shutdownBehaviourCB_stateChanged(int arg1)
 {
     behaviourOnMcShutdownTransferVar = (arg1>0);
+}
+
+
+void metaSettings::on_loadPresetcheckBox_stateChanged(int arg1)
+{
+    presetValueBehaviourTransferVar = (arg1>0);
 }
 
