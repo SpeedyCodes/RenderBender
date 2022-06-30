@@ -44,6 +44,10 @@ metaSettings::metaSettings(QWidget *parent, uintptr_t statOff, bool presValBeh, 
     for(int i = 0; i < presetNames.size(); i++){
         ui->presValBehBox->addItem(presetNames[i]);
     }
+    if(presetNames.size() == 0){
+        ui->presValBehBox->setEnabled(false);
+        ui->loadPresetcheckBox->setEnabled(false);
+    }
     defaultPresetTransferVar = defaultPreset;
     if (staticOffsetTransferVar != 0) ui->staticMemoryOffsetTxt->setText(utils::decToHex(staticOffsetTransferVar));
     ui->presValBehBox->setCurrentIndex(defaultPresetTransferVar);
@@ -81,11 +85,14 @@ void metaSettings::on_buttonBox_accepted()
 
 void metaSettings::on_settingsJSONlocBtn_pressed()
 {
-    settingsJsonPathTransferVar = QFileDialog::getOpenFileName(this,tr("Open JSON"),  QStandardPaths::standardLocations(QStandardPaths::DownloadLocation).constFirst(), tr("JSON Files (*.json)"));
-    QMessageBox msgBox;
-    msgBox.setText("The new setting file's location will be saved as soon as you press OK. Please restart RenderBender afterwards for the changes to take effect.");
-    msgBox.exec();
-    ui->JSONpathLabel->setText(settingsJsonPathTransferVar);
+    QString newPath = QFileDialog::getOpenFileName(this,tr("Open JSON"),  QStandardPaths::standardLocations(QStandardPaths::DownloadLocation).constFirst(), tr("JSON Files (*.json)"));
+    if(newPath != ""){
+        settingsJsonPathTransferVar = newPath;
+        QMessageBox msgBox;
+        msgBox.setText("The new setting file's location will be saved as soon as you press OK. Please restart RenderBender afterwards for the changes to take effect.");
+        msgBox.exec();
+        ui->JSONpathLabel->setText(settingsJsonPathTransferVar);
+    }
 }
 
 

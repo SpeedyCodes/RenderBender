@@ -179,12 +179,12 @@ void MainWindow::updateStatusBar(int targetMessage){
     statusBar()->removeWidget(label);
     switch (targetMessage) {
         case 0:
-            label = new QLabel("RenderBender " + utils::version + " feature testing #3" + " | Disconnected from target process");
+            label = new QLabel("RenderBender " + utils::version + " | Disconnected from target process");
             statusBar()->addWidget(label);
             connectedToTargetProcess = false;
             break;
         case 1:
-            label = new QLabel("RenderBender " + utils::version + " feature testing #3" + " | Connected to target process");
+            label = new QLabel("RenderBender " + utils::version + " | Connected to target process");
             statusBar()->addWidget(label);
             connectedToTargetProcess = true;
             break;
@@ -581,12 +581,19 @@ void MainWindow::readPreferences(bool onlyPresets){
     presetValues.clear();
     presetSettingNames.clear();
     if(!onlyPresets){
-    staticOffset = utils::hexToDec(obj.value(QString("staticOffset")).toString());
-    presetValueBehaviour = obj.value(QString("presetValueBehaviour")).toBool();
-    settingsJsonPath = obj.value(QString("settingsJSONpath")).toString();
-    autoMcStartupBehaviour = obj.value(QString("autoMcStartupBehaviour")).toBool();
-    onMcShutdownBehaviour = obj.value(QString("behaviourOnMcShutdown")).toBool();
-    defaultPreset = obj.value(QString("defaultPresetIndex")).toInt();
+        staticOffset = utils::hexToDec(obj.value(QString("staticOffset")).toString());
+        presetValueBehaviour = obj.value(QString("presetValueBehaviour")).toBool();
+        settingsJsonPath = obj.value(QString("settingsJSONpath")).toString();
+        autoMcStartupBehaviour = obj.value(QString("autoMcStartupBehaviour")).toBool();
+        onMcShutdownBehaviour = obj.value(QString("behaviourOnMcShutdown")).toBool();
+        defaultPreset = obj.value(QString("defaultPresetIndex")).toInt();
+        if(!obj.value(QString("hasRunBefore")).toBool()){
+            QMessageBox msgBox;
+            msgBox.setText("The 'Static memory offset' setting has been set to 0x04177558, the correct value for the latest Minecraft release version at the time of writing, 1.19.2. As this value can change depending on what Minecraft version you are using, you may need to change it in File->Preferences if you are using another version. Please consult the Github README (click Help->Usage) to find the correct value for you.");
+            msgBox.setStandardButtons(QMessageBox::Ok);
+            msgBox.exec();
+            utils::writeConfigProperty("hasRunBefore", true);
+        }
     }
     for(int presetCounter = 0;presetCounter < presets.size(); presetCounter++){
         vector<float> values;
