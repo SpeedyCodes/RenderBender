@@ -9,6 +9,7 @@
 #include <QTextStream>
 int main(int argc, char *argv[])
 {
+    //QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication a(argc, argv);
     QApplication::setAttribute(Qt::AA_DisableWindowContextHelpButton);
     QFile f(":qdarkstyle/dark/style.qss");

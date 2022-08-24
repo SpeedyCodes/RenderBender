@@ -92,8 +92,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionCEPresetImport"/>
     <addaction name="actionAttach"/>
+    <addaction name="actionCEPresetImport"/>
+    <addaction name="actionCEPresetExport"/>
     <addaction name="actionRestartProcess"/>
     <addaction name="actionPreferences"/>
     <addaction name="actionExit"/>
@@ -180,7 +181,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   </action>
   <action name="actionCEPresetImport">
    <property name="text">
-    <string>Import old CE preset</string>
+    <string>Import CE Lua preset</string>
    </property>
   </action>
   <action name="actionAttach">
@@ -191,6 +192,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   <action name="actionRestartProcess">
    <property name="text">
     <string>Restart target process</string>
+   </property>
+  </action>
+  <action name="actionCEPresetExport">
+   <property name="text">
+    <string>Export CE Lua preset</string>
    </property>
   </action>
  </widget>

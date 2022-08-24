@@ -37,6 +37,9 @@ If you are using a different version however, you'll probably need to edit the s
 Go to `File/Preferences` and set the static memory offset for your specific Minecraft version. You can find values for some common versions here.
 - Release 1.19.0: 0x0411AB28
 - Release 1.19.2: 0x04177558
+- Release 1.19.10: 0x0430A460
+- Release 1.19.11: 0x0430A4C0
+- Release 1.19.20: 0x044B0080
 
 If your version isn't yet on the list, you'll have to ask the people in the previously mentioned Discord server for help. If you have a Cheat Engine Cheat Table, you can get it from there too, if you know how. 
 If this all sounds rather complicated: we are currently working on a way for RenderBender to detect the static memory offset automatically.

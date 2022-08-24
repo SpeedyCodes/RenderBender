@@ -36,6 +36,7 @@
 #include <QProgressDialog>
 #include <QDesktopServices>
 #include <oldcepresetimportdialog.h>
+#include <cepresetexportdialog.h>
 #include <QScreen>
 #include <QCompleter>
 #include <QLineEdit>
@@ -54,6 +55,7 @@ vector<uintptr_t> baseAdresses;
 class setting {
 public:
     QString displayName;
+    QString description;
     int baseOffsetIndex;
     //char *shortName;
     uintptr_t addr;
@@ -69,6 +71,7 @@ public:
     QPushButton* resetButton;
     QSlider* slider;
     settingType type;
+    bool isOverridden = false;
     //int precision;
     void updateAddr(){
         if(baseAdresses.size() > baseOffsetIndex) addr = baseAdresses[baseOffsetIndex] + offset;
@@ -91,6 +94,7 @@ public:
     }
     bool resetToDefault(){
         if(!hasDefault) return true;
+        toggleOverride(false);
         switch (type) {
             case settingType::FLOAT:{
                 if(write(defaultValue) == true){
@@ -123,11 +127,37 @@ public:
         }
         return false;
     }
+    void toggleOverride(bool state){
+        if (type == settingType::BOOL) return;
+        isOverridden = state;
+        slider->setEnabled(!state);
+        if(state){
+            if(type == settingType::INT){
+                QSpinBox* s = (QSpinBox*)widget;
+                s->setRange(-INT_MAX, INT_MAX);
+            }else{//type is float, bools cannot be overridden
+                QDoubleSpinBox* s = (QDoubleSpinBox*)widget;
+                s->setRange(-FLT_MAX, FLT_MAX);
+            }
+        }
+        else{
+            float clampedVal = std::clamp((float)slider->value(), minVal, maxVal);
+            write(clampedVal);
+            if(type == settingType::INT){
+                QSpinBox* s = (QSpinBox*)widget;
+                s->setRange(minVal, maxVal);
+            }else{//type is float, bools cannot be overridden
+                QDoubleSpinBox* s = (QDoubleSpinBox*)widget;
+                s->setRange(minVal, maxVal);
+            }
+        }
+    }
     //https://stackoverflow.com/questions/351845/finding-the-type-of-an-object-in-c
-    setting(int offsetIndex, QString offsetString, QString name, int groupIndex, float defaultVal, float min, float max, float i, settingType varType, QWidget* w, QPushButton* rb
+    setting(int offsetIndex, QString offsetString, QString name, QString desc, int groupIndex, float defaultVal, float min, float max, float i, settingType varType, QWidget* w, QPushButton* rb
             , QSlider* sl, bool hasDefaultValue){
         baseOffsetIndex = offsetIndex;
         displayName = name;
+        description = desc;
         offset = utils::hexToDec(offsetString);
         updateAddr();
         group = groupIndex;
@@ -209,12 +239,12 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     if(!config.exists()){
         QJsonObject jsonObject;
         jsonObject.insert("presetValueBehaviour", false);
-        jsonObject.insert("staticOffset", "0x04177558");
+        jsonObject.insert("staticOffset", "0x044B0080");
         jsonObject.insert("autoMcStartupBehaviour", false);
         jsonObject.insert("behaviourOnMcShutdown", false);
         jsonObject.insert("defaultPresetIndex", 0);
         QMessageBox msgBox;
-        msgBox.setText("The 'Static memory offset' setting has been set to 0x04177558, the correct value for the latest Minecraft release version at the time of writing, 1.19.2. As this value can change depending on what Minecraft version you are using, you may need to change it in File->Preferences if you are using another version. Please consult the Github README (click Help->Usage) to find the correct value for you.");
+        msgBox.setText("The 'Static memory offset' setting has been set to 0x044B0080, the correct value for the latest Minecraft release version at the time of writing, 1.19.20. As this value can change depending on what Minecraft version you are using, you may need to change it in File->Preferences if you are using another version. Please consult the Github README (click Help->Usage) to find the correct value for you.");
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.exec();
         QJsonDocument jsonDoc;
@@ -383,6 +413,16 @@ void MainWindow::GenerateUI(){
         QString type = obj.value(QString("type")).toString();
         QString infoText = obj.value(QString("displayName")).toString();
         settingNames << infoText;
+        QString description = obj.value(QString("description")).toString();
+        QPushButton *infoButton;
+        if (description != "null"){
+            infoButton = new QPushButton();
+            infoButton->setText("What's this?");
+            infoButton->setObjectName("infoButton" + QString::number(i));
+            infoButton->setToolTip(description);
+        } else{
+            infoButton = nullptr;
+        }
         QJsonValue defaultValObj = obj.value(QString("default"));
         bool hasDefault = (defaultValObj.toString() != "null");
         float defaultVal = defaultValObj.toDouble();
@@ -405,16 +445,20 @@ void MainWindow::GenerateUI(){
             QFrame *mainFrame = new QFrame();
             QVBoxLayout *mainLayout = new QVBoxLayout();
             QLabel *label = new QLabel(infoText);
+            QWidget *titleFrame = new QWidget();
+            QHBoxLayout *titleLayout = new QHBoxLayout();
             QWidget *subFrame = new QWidget();
             QHBoxLayout *subLayout = new QHBoxLayout();
             QSpinBox *spinBox = new QSpinBox();
             QSlider *slider = new QSlider(Qt::Orientation::Horizontal);
+            QCheckBox *overrideCB = new QCheckBox();
+            overrideCB->setText("Override Min/Max");
+            overrideCB->setObjectName("overrideCB" + QString::number(i));
 
             int min = obj.value(QString("min")).toInt();
             int max = obj.value(QString("max")).toInt();
-            setting s(obj.value(QString("pointerIndex")).toInt(), obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
-            groupIndex, defaultVal, min,
-            max, i,  settingType::INT, spinBox, resetButton, slider, hasDefault);
+            setting s(obj.value(QString("pointerIndex")).toInt(), obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(), description,
+            groupIndex, defaultVal, min, max, i,  settingType::INT, spinBox, resetButton, slider, hasDefault);
             settings.push_back(s);
             int val;
             s.read(val);
@@ -431,12 +475,17 @@ void MainWindow::GenerateUI(){
             slider->setObjectName("settingSlider" + QString::number(i));
             slider->setStyleSheet("margin: 5 0 0 0;");
             QObject::connect(slider, SIGNAL(valueChanged(int)), this, SLOT(onSliderValueChanged(int)));
+            QObject::connect(overrideCB, SIGNAL(stateChanged(int)), this, SLOT(onRangeOverrideToggle(int)));
 
+            titleFrame->setLayout(titleLayout);
             subFrame->setLayout(subLayout);
             mainFrame->setLayout(mainLayout);
-            mainLayout->insertWidget(0, label);
+            mainLayout->insertWidget(0, titleFrame);
+            titleLayout->insertWidget(0, label);
+            if(infoButton != nullptr) titleLayout->insertWidget(1, infoButton);
             subLayout->insertWidget(0, spinBox);
             subLayout->insertWidget(1, resetButton);
+            subLayout->insertWidget(2, overrideCB);
             mainLayout->insertWidget(1, subFrame);
             mainLayout->insertWidget(2, slider);
             currentContainerDiv->insertWidget(0, mainFrame);
@@ -446,16 +495,20 @@ void MainWindow::GenerateUI(){
             QFrame *mainFrame = new QFrame();
             QVBoxLayout *mainLayout = new QVBoxLayout();
             QLabel* label = new QLabel(infoText);
+            QWidget *titleFrame = new QWidget();
+            QHBoxLayout *titleLayout = new QHBoxLayout();
             QWidget *subFrame = new QWidget();
             QHBoxLayout *subLayout = new QHBoxLayout();
             QDoubleSpinBox *spinBox = new QDoubleSpinBox();
             QSlider *slider = new QSlider(Qt::Orientation::Horizontal);
+            QCheckBox *overrideCB = new QCheckBox();
+            overrideCB->setText("Override Min/Max");
+            overrideCB->setObjectName("overrideCB" + QString::number(i));
 
             float min = obj.value(QString("min")).toDouble();
             float max = obj.value(QString("max")).toDouble();
-            setting s(obj.value(QString("pointerIndex")).toInt(), obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
-            groupIndex,defaultVal, min,
-            max, i, settingType::FLOAT, spinBox, resetButton, slider, hasDefault);
+            setting s(obj.value(QString("pointerIndex")).toInt(), obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(), description,
+            groupIndex,defaultVal, min, max, i, settingType::FLOAT, spinBox, resetButton, slider, hasDefault);
             settings.push_back(s);
             float val;
             s.read(val);
@@ -473,12 +526,17 @@ void MainWindow::GenerateUI(){
             slider->setObjectName("settingSlider" + QString::number(i));
             slider->setStyleSheet("margin: 5 0 0 0;");
             QObject::connect(slider, SIGNAL(valueChanged(int)), this, SLOT(onSliderValueChanged(int)));
+            QObject::connect(overrideCB, SIGNAL(stateChanged(int)), this, SLOT(onRangeOverrideToggle(int)));
 
+            titleFrame->setLayout(titleLayout);
             subFrame->setLayout(subLayout);
             mainFrame->setLayout(mainLayout);
-            mainLayout->insertWidget(0, label);
+            mainLayout->insertWidget(0, titleFrame);
+            titleLayout->insertWidget(0, label);
+            if(infoButton != nullptr) titleLayout->insertWidget(1, infoButton);
             subLayout->insertWidget(0, spinBox);
             subLayout->insertWidget(1, resetButton);
+            subLayout->insertWidget(2, overrideCB);
             mainLayout->insertWidget(1, subFrame);
             mainLayout->insertWidget(2, slider);
             currentContainerDiv->insertWidget(0, mainFrame);
@@ -487,16 +545,20 @@ void MainWindow::GenerateUI(){
         else if (type == "bool"){
             QFrame *frame = new QFrame();
             QHBoxLayout *la = new QHBoxLayout();
+            QFrame *subFrame = new QFrame();
+            QVBoxLayout *subLayout = new QVBoxLayout();
             QCheckBox *cb = new QCheckBox(infoText);
 
-            setting s(obj.value(QString("pointerIndex")).toInt(), obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(),
-            groupIndex, defaultVal == 1, false,
-            true, i, settingType::BOOL, cb, resetButton, nullptr, hasDefault);
+            setting s(obj.value(QString("pointerIndex")).toInt(), obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(), description,
+            groupIndex, defaultVal == 1, false, true, i, settingType::BOOL, cb, resetButton, nullptr, hasDefault);
             settings.push_back(s);
             bool val;
             s.read(val);
+            subLayout->insertWidget(0, resetButton);
+            if(infoButton != nullptr) subLayout->insertWidget(1, infoButton);
+            subFrame->setLayout(subLayout);
             la->insertWidget(0, cb);
-            la->insertWidget(1, resetButton);
+            la->insertWidget(1, subFrame);
             frame->setLayout(la);
             cb->setChecked(val);
             currentContainerDiv->insertWidget(0, frame);
@@ -779,10 +841,7 @@ void MainWindow::on_actionCEPresetImport_triggered()
     progress.setValue(settingCount);
     readPreferences(true);
     QMessageBox msgBox;
-    msgBox.setText("The new preset has been saved.");
-    msgBox.setStandardButtons(QMessageBox::Ok);
-    msgBox.exec();
-    msgBox.setText("Would you like to apply this new preset immediately? (you can always do this later from Edit->Load Preset->...)");
+    msgBox.setText("The new preset has been saved. Would you like to apply it immediately? (you can always do this later from Edit->Load Preset->...)");
     msgBox.setStandardButtons(QMessageBox::No | QMessageBox::Yes);
     if(msgBox.exec() == QMessageBox::Yes){
         loadPreset(presetTitles.size()-1);
@@ -895,3 +954,15 @@ void MainWindow::on_actionRestartProcess_triggered()
     attachToTargetProcess();
 }
 
+
+void MainWindow::on_actionCEPresetExport_triggered()
+{    
+    cepresetexportdialog *dialog = new cepresetexportdialog(this, &presetTitles, &presetValues, &presetSettingNames);
+    dialog->setModal(true);
+    dialog->exec();
+}
+void MainWindow::onRangeOverrideToggle(int state, int i){
+    int index = i;
+    if (i == -1)index = sender()->objectName().replace("overrideCB", "").toInt();
+    settings[index].toggleOverride(state == Qt::Checked);
+}

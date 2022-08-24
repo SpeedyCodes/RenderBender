@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>cepresetexportdialog</class>
+ <widget class="QDialog" name="cepresetexportdialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>300</width>
+    <height>240</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Import CheatEngine Lua Preset</string>
+  </property>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>10</y>
+     <width>251</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>The string of text generated here can be used both as a preset for Cheat Engine and as a preset for RenderBender. Select the preset to export here:</string>
+   </property>
+   <property name="wordWrap">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="presetSelectorBox">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>90</y>
+     <width>231</width>
+     <height>24</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPlainTextEdit" name="exportText">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>120</y>
+     <width>261</width>
+     <height>70</height>
+    </rect>
+   </property>
+   <property name="textInteractionFlags">
+    <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="clipBoardButton">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>200</y>
+     <width>101</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Copy to clipboard</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

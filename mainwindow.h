@@ -47,8 +47,9 @@ private slots:
     void on_actionAttach_triggered();
     void on_actionSetDefaultValues_triggered();
     void RecalculateBaseAdresses();
-
     void on_actionRestartProcess_triggered();
+    void onRangeOverrideToggle(int state, int i = -1);
+    void on_actionCEPresetExport_triggered();
 
 private:
     Ui::MainWindow *ui;
