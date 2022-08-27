@@ -203,6 +203,7 @@ vector<vector<float>> presetValues;
 vector<QStringList> presetSettingNames;
 vector<vector<unsigned int>> basePointers = {};
 int defaultPreset;
+bool isTargetProcessRestarting = false;
 
 void MainWindow::updateStatusBar(int targetMessage){
     //targetMessage: 0->disconnected from mc process, 1->connected to mc process
@@ -222,7 +223,7 @@ void MainWindow::updateStatusBar(int targetMessage){
 }
 void CALLBACK mcShutdownHandler(void* lpParameter, bool TimerOrWaitFired)
 {
-    if(onMcShutdownBehaviour == true){
+    if(onMcShutdownBehaviour == true && !isTargetProcessRestarting){
         QCoreApplication::quit();
     }else if(onMcShutdownBehaviour == false){
         emit w->statusbarsignal(0) ;
@@ -243,6 +244,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
         jsonObject.insert("autoMcStartupBehaviour", false);
         jsonObject.insert("behaviourOnMcShutdown", false);
         jsonObject.insert("defaultPresetIndex", 0);
+        jsonObject.insert("enableHighDpiScaling", true);
         QMessageBox msgBox;
         msgBox.setText("The 'Static memory offset' setting has been set to 0x044B0080, the correct value for the latest Minecraft release version at the time of writing, 1.19.20. As this value can change depending on what Minecraft version you are using, you may need to change it in File->Preferences if you are using another version. Please consult the Github README (click Help->Usage) to find the correct value for you.");
         msgBox.setStandardButtons(QMessageBox::Ok);
@@ -287,15 +289,19 @@ void MainWindow::attachToTargetProcess(){
 }
 void MainWindow::selectJson(){
     QString path = QFileDialog::getOpenFileName(this,tr("Open JSON"),  QStandardPaths::standardLocations(QStandardPaths::DownloadLocation).constFirst(), tr("JSON Files (*.json)"));
-    if(path == ""){return;}
+    if(path == "") return;
     utils::writeConfigProperty("settingsJSONpath", path);
     settingsJsonPath = path;
     readJson(path);
     GenerateUI();
 }
 void MainWindow::readJson(QString path){
+    //make sure local filepaths are used starting from executable directory path
+    QDir executableDir(QCoreApplication::applicationDirPath());
+    QString absoluteJsonDir = executableDir.absoluteFilePath(path);
+
     QFile file;
-    file.setFileName(path);
+    file.setFileName(absoluteJsonDir);
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QString rawText = file.readAll();
     file.close();
@@ -947,11 +953,14 @@ void MainWindow::RecalculateBaseAdresses(){
 
 void MainWindow::on_actionRestartProcess_triggered()
 {
+    isTargetProcessRestarting = true;
     WinExec("taskkill /IM Minecraft.Windows.exe /F", SW_HIDE);
     this_thread::sleep_for(chrono::milliseconds(1000));
     utils::runMinecraft();
     this_thread::sleep_for(chrono::milliseconds(10000));
     attachToTargetProcess();
+    isTargetProcessRestarting = false;
+    on_actionReread_all_setting_values_triggered();
 }
 
 
