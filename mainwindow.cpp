@@ -72,6 +72,7 @@ public:
     QSlider* slider;
     settingType type;
     bool isOverridden = false;
+    int spinBoxPrecision = defaultSpinboxPrecision;
     //int precision;
     void updateAddr(){
         if(baseAdresses.size() > baseOffsetIndex) addr = baseAdresses[baseOffsetIndex] + offset;
@@ -100,7 +101,7 @@ public:
                 if(write(defaultValue) == true){
                     QDoubleSpinBox *w = (QDoubleSpinBox*)widget;
                     w->setValue(defaultValue);
-                    slider->setValue(defaultValue*pow(10, defaultSpinboxPrecision));
+                    slider->setValue(defaultValue*pow(10, spinBoxPrecision));
                     return true;
                 }
                 break;
@@ -166,9 +167,15 @@ public:
         defaultValue = defaultVal;
         minVal = min;
         maxVal = max;
-        widget = w;
-        resetButton = rb;
+        while(((float)INT_MAX)/pow(10, spinBoxPrecision) < (int)(maxVal - minVal)){
+            spinBoxPrecision--;
+        }
         slider = sl;
+        if(type == settingType::FLOAT){
+            slider->setRange(minVal*pow(10, spinBoxPrecision), maxVal*pow(10, spinBoxPrecision));
+        }
+        resetButton = rb;
+        widget = w;
         hasDefault = hasDefaultValue;
         if(!hasDefault) resetButton->setVisible(false);
     }
@@ -314,7 +321,7 @@ void MainWindow::onSettingValueChanged(double i){
     int index = sender()->objectName().replace("settingUIelement", "").toInt();
     float convertedValue = static_cast<float>(i);
     changingUIvalues = true;
-    settings[index].slider->setValue(convertedValue*pow(10, defaultSpinboxPrecision));
+    settings[index].slider->setValue(convertedValue*pow(10, settings[index].spinBoxPrecision));
     changingUIvalues = false;
     settings[index].write(convertedValue);
 
@@ -336,7 +343,7 @@ void MainWindow::onSliderValueChanged(int newValue){
     if(changingUIvalues)return;
     int index = sender()->objectName().replace("settingSlider", "").toInt();
     if(settings[index].type == settingType::FLOAT){
-        float newValueCorrected = newValue/pow(10, defaultSpinboxPrecision);
+        float newValueCorrected = newValue/pow(10, settings[index].spinBoxPrecision);
         settings[index].write(newValueCorrected);
         QDoubleSpinBox *widget = (QDoubleSpinBox*)settings[index].widget;
         changingUIvalues = true;
@@ -513,6 +520,10 @@ void MainWindow::GenerateUI(){
 
             float min = obj.value(QString("min")).toDouble();
             float max = obj.value(QString("max")).toDouble();
+            if(min == max && max == 0){
+                min = -INT_MAX;
+                max = INT_MAX;
+            }
             setting s(obj.value(QString("pointerIndex")).toInt(), obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(), description,
             groupIndex,defaultVal, min, max, i, settingType::FLOAT, spinBox, resetButton, slider, hasDefault);
             settings.push_back(s);
@@ -526,9 +537,9 @@ void MainWindow::GenerateUI(){
             spinBox->setRange(min, max);
             spinBox->setValue(val);
             QObject::connect(spinBox, SIGNAL(valueChanged(double)), this, SLOT(onSettingValueChanged(double)));
-            spinBox->setDecimals(defaultSpinboxPrecision);
-            slider->setRange(min*pow(10, defaultSpinboxPrecision), max*pow(10, defaultSpinboxPrecision));
-            slider->setValue(val*pow(10, defaultSpinboxPrecision));
+            spinBox->setDecimals(s.spinBoxPrecision);
+            //slider range moved to setting constructor to account for spinbox precision
+            slider->setValue(val*pow(10, s.spinBoxPrecision));
             slider->setObjectName("settingSlider" + QString::number(i));
             slider->setStyleSheet("margin: 5 0 0 0;");
             QObject::connect(slider, SIGNAL(valueChanged(int)), this, SLOT(onSliderValueChanged(int)));
@@ -699,7 +710,7 @@ void MainWindow::on_actionReread_all_setting_values_triggered()
                 settings[i].read(newVal);
                 QDoubleSpinBox *widget = (QDoubleSpinBox*)settings[i].widget;
                 widget->setValue(newVal);
-                settings[i].slider->setValue(newVal*pow(10, defaultSpinboxPrecision));
+                settings[i].slider->setValue(newVal*pow(10, settings[i].spinBoxPrecision));
 
                 break;
             }
@@ -877,7 +888,7 @@ void MainWindow::loadPreset(int index){
                     if(settings[i].write(presetValues[presetIndex][settingIndex]) == true){
                         QDoubleSpinBox *w = (QDoubleSpinBox*)settings[i].widget;
                         w->setValue(presetValues[presetIndex][settingIndex]);
-                        settings[i].slider->setValue(presetValues[presetIndex][settingIndex]*pow(10, defaultSpinboxPrecision));
+                        settings[i].slider->setValue(presetValues[presetIndex][settingIndex]*pow(10, settings[i].spinBoxPrecision));
                     }
                     break;
                 }

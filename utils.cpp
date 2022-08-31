@@ -22,7 +22,7 @@
 #include <QFile>
 #include <windows.h>
 
-QString utils::version = "v0.3.1 Feature Testing #1";
+QString utils::version = "v0.3.1 Feature Testing #2";
 
 uintptr_t utils::hexToDec(QString hex){
     QByteArray ba = hex.toLocal8Bit();
