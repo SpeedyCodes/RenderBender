@@ -202,7 +202,7 @@ int settingCount;
 QStringList settingNames;
 bool autoMcStartupBehaviour;
 int onMcShutdownBehaviour;
-QLabel* label;
+QLabel* statusBarLabel;
 MainWindow* w;
 bool connectedToTargetProcess = false;
 QStringList presetTitles;
@@ -214,16 +214,16 @@ bool isTargetProcessRestarting = false;
 
 void MainWindow::updateStatusBar(int targetMessage){
     //targetMessage: 0->disconnected from mc process, 1->connected to mc process
-    statusBar()->removeWidget(label);
+    statusBar()->removeWidget(statusBarLabel);
     switch (targetMessage) {
         case 0:
-            label = new QLabel("RenderBender " + utils::version + " | Disconnected from target process");
-            statusBar()->addWidget(label);
+            statusBarLabel = new QLabel("RenderBender " + utils::version + " | Disconnected from target process");
+            statusBar()->addWidget(statusBarLabel);
             connectedToTargetProcess = false;
             break;
         case 1:
-            label = new QLabel("RenderBender " + utils::version + " | Connected to target process");
-            statusBar()->addWidget(label);
+            statusBarLabel = new QLabel("RenderBender " + utils::version + " | Connected to target process");
+            statusBar()->addWidget(statusBarLabel);
             connectedToTargetProcess = true;
             break;
     }
@@ -247,13 +247,13 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     if(!config.exists()){
         QJsonObject jsonObject;
         jsonObject.insert("presetValueBehaviour", false);
-        jsonObject.insert("staticOffset", "0x044B0080");
+        jsonObject.insert("staticOffset", "0x044B0F60");
         jsonObject.insert("autoMcStartupBehaviour", false);
         jsonObject.insert("behaviourOnMcShutdown", false);
         jsonObject.insert("defaultPresetIndex", 0);
         jsonObject.insert("enableHighDpiScaling", true);
         QMessageBox msgBox;
-        msgBox.setText("The 'Static memory offset' setting has been set to 0x044B0080, the correct value for the latest Minecraft release version at the time of writing, 1.19.20. As this value can change depending on what Minecraft version you are using, you may need to change it in File->Preferences if you are using another version. Please consult the Github README (click Help->Usage) to find the correct value for you.");
+        msgBox.setText("The 'Static memory offset' setting has been set to 0x044B0F60, the correct value for the latest Minecraft release version at the time of writing, 1.19.22. As this value can change depending on what Minecraft version you are using, you may need to change it in File->Preferences if you are using another version. Please consult the Github README (click Help->Usage) to find the correct value for you.");
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.exec();
         QJsonDocument jsonDoc;
@@ -427,15 +427,7 @@ void MainWindow::GenerateUI(){
         QString infoText = obj.value(QString("displayName")).toString();
         settingNames << infoText;
         QString description = obj.value(QString("description")).toString();
-        QPushButton *infoButton;
-        if (description != "null"){
-            infoButton = new QPushButton();
-            infoButton->setText("What's this?");
-            infoButton->setObjectName("infoButton" + QString::number(i));
-            infoButton->setToolTip(description);
-        } else{
-            infoButton = nullptr;
-        }
+        if(description != "null")description = "<html><head/><body><p style='white-space:pre'>" + description + "</p></body></html>";
         QJsonValue defaultValObj = obj.value(QString("default"));
         bool hasDefault = (defaultValObj.toString() != "null");
         float defaultVal = defaultValObj.toDouble();
@@ -458,6 +450,11 @@ void MainWindow::GenerateUI(){
             QFrame *mainFrame = new QFrame();
             QVBoxLayout *mainLayout = new QVBoxLayout();
             QLabel *label = new QLabel(infoText);
+            if (description != "null"){
+                label->setToolTip(description);
+            }else{
+                label->setToolTip("This setting does not have a description yet.");
+            }
             QWidget *titleFrame = new QWidget();
             QHBoxLayout *titleLayout = new QHBoxLayout();
             QWidget *subFrame = new QWidget();
@@ -495,7 +492,6 @@ void MainWindow::GenerateUI(){
             mainFrame->setLayout(mainLayout);
             mainLayout->insertWidget(0, titleFrame);
             titleLayout->insertWidget(0, label);
-            if(infoButton != nullptr) titleLayout->insertWidget(1, infoButton);
             subLayout->insertWidget(0, spinBox);
             subLayout->insertWidget(1, resetButton);
             subLayout->insertWidget(2, overrideCB);
@@ -508,6 +504,11 @@ void MainWindow::GenerateUI(){
             QFrame *mainFrame = new QFrame();
             QVBoxLayout *mainLayout = new QVBoxLayout();
             QLabel* label = new QLabel(infoText);
+            if (description != "null"){
+                label->setToolTip(description);
+            }else{
+                label->setToolTip("This setting does not have a description yet.");
+            }
             QWidget *titleFrame = new QWidget();
             QHBoxLayout *titleLayout = new QHBoxLayout();
             QWidget *subFrame = new QWidget();
@@ -550,7 +551,6 @@ void MainWindow::GenerateUI(){
             mainFrame->setLayout(mainLayout);
             mainLayout->insertWidget(0, titleFrame);
             titleLayout->insertWidget(0, label);
-            if(infoButton != nullptr) titleLayout->insertWidget(1, infoButton);
             subLayout->insertWidget(0, spinBox);
             subLayout->insertWidget(1, resetButton);
             subLayout->insertWidget(2, overrideCB);
@@ -565,6 +565,11 @@ void MainWindow::GenerateUI(){
             QFrame *subFrame = new QFrame();
             QVBoxLayout *subLayout = new QVBoxLayout();
             QCheckBox *cb = new QCheckBox(infoText);
+            if (description != "null"){
+                cb->setToolTip(description);
+            }else{
+                cb->setToolTip("This setting does not have a description yet.");
+            }
 
             setting s(obj.value(QString("pointerIndex")).toInt(), obj.value(QString("offset")).toString(), infoText.toLocal8Bit().data(), description,
             groupIndex, defaultVal == 1, false, true, i, settingType::BOOL, cb, resetButton, nullptr, hasDefault);
@@ -572,7 +577,6 @@ void MainWindow::GenerateUI(){
             bool val;
             s.read(val);
             subLayout->insertWidget(0, resetButton);
-            if(infoButton != nullptr) subLayout->insertWidget(1, infoButton);
             subFrame->setLayout(subLayout);
             la->insertWidget(0, cb);
             la->insertWidget(1, subFrame);
@@ -668,7 +672,7 @@ void MainWindow::readPreferences(bool onlyPresets){
         defaultPreset = obj.value(QString("defaultPresetIndex")).toInt();
         if(!obj.value(QString("hasRunBefore")).toBool()){
             QMessageBox msgBox;
-            msgBox.setText("The 'Static memory offset' setting has been set to 0x04177558, the correct value for the latest Minecraft release version at the time of writing, 1.19.2. As this value can change depending on what Minecraft version you are using, you may need to change it in File->Preferences if you are using another version. Please consult the Github README (click Help->Usage) to find the correct value for you.");
+            msgBox.setText("The 'Static memory offset' setting has been set to 0x044B0F60, the correct value for the latest Minecraft release version at the time of writing, 1.19.22. As this value can change depending on what Minecraft version you are using, you may need to change it in File->Preferences if you are using another version. Please consult the Github README (click Help->Usage) to find the correct value for you.");
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.exec();
             utils::writeConfigProperty("hasRunBefore", true);
