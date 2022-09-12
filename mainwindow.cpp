@@ -43,6 +43,7 @@
 #include <chrono>
 #include <thread>
 #include <QTime>
+#include <math.h>
 
 enum class settingType { INT, FLOAT, BOOL};
 DWORD GetProcessId(const wchar_t* procName);
@@ -138,7 +139,7 @@ public:
                 s->setRange(-INT_MAX, INT_MAX);
             }else{//type is float, bools cannot be overridden
                 QDoubleSpinBox* s = (QDoubleSpinBox*)widget;
-                s->setRange(-FLT_MAX, FLT_MAX);
+                s->setRange(-CC_MAX, CC_MAX);
             }
         }
         else{
