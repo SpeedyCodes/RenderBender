@@ -247,13 +247,13 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     if(!config.exists()){
         QJsonObject jsonObject;
         jsonObject.insert("presetValueBehaviour", false);
-        jsonObject.insert("staticOffset", "0x044B0F60");
+        jsonObject.insert("staticOffset", "0x04876CA0");
         jsonObject.insert("autoMcStartupBehaviour", false);
         jsonObject.insert("behaviourOnMcShutdown", false);
         jsonObject.insert("defaultPresetIndex", 0);
         jsonObject.insert("enableHighDpiScaling", true);
         QMessageBox msgBox;
-        msgBox.setText("The 'Static memory offset' setting has been set to 0x044B0F60, the correct value for the latest Minecraft release version at the time of writing, 1.19.22. As this value can change depending on what Minecraft version you are using, you may need to change it in File->Preferences if you are using another version. Please consult the Github README (click Help->Usage) to find the correct value for you.");
+        msgBox.setText("The 'Static memory offset' setting has been set to 0x04876CA0, the correct value for the latest Minecraft release version at the time of writing, 1.19.31. As this value can change depending on what Minecraft version you are using, you may need to change it in File->Preferences if you are using another version. Please consult the Github README (click Help->Usage) to find the correct value for you.");
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.exec();
         QJsonDocument jsonDoc;
@@ -672,7 +672,7 @@ void MainWindow::readPreferences(bool onlyPresets){
         defaultPreset = obj.value(QString("defaultPresetIndex")).toInt();
         if(!obj.value(QString("hasRunBefore")).toBool()){
             QMessageBox msgBox;
-            msgBox.setText("The 'Static memory offset' setting has been set to 0x044B0F60, the correct value for the latest Minecraft release version at the time of writing, 1.19.22. As this value can change depending on what Minecraft version you are using, you may need to change it in File->Preferences if you are using another version. Please consult the Github README (click Help->Usage) to find the correct value for you.");
+            msgBox.setText("The 'Static memory offset' setting has been set to 0x04876CA0, the correct value for the latest Minecraft release version at the time of writing, 1.19.31. As this value can change depending on what Minecraft version you are using, you may need to change it in File->Preferences if you are using another version. Please consult the Github README (click Help->Usage) to find the correct value for you.");
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.exec();
             utils::writeConfigProperty("hasRunBefore", true);
