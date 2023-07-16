@@ -2,9 +2,13 @@
 A third party program to change Minecraft RTX's settings externally, directly in-memory.
 Get the latest release [here](https://github.com/SpeedyCodes/RenderBender/releases).
 
+_Note about the current state of the project:
+With the release of BetterRTX, RenderBender has been in some ways made obsolete. This in combination with me personally having barely any time to work on RB anymore, has led me to decide to permanently stop further development. It is possible that some small improvements will still be made in the near future, but in general, this is where RenderBender ends.
+I would like to thank everyone who helped along the way with playtesting, feature suggestions, implementation-related ideas, ..., the members of the Minecraft RTX Discord server in particular, for their support._
+
 ## About
-RenderBender is a third party program that aims to improve Minecraft RTX's look.
-This is achieved by editing the settings in-memory, meaning that there is little to no risk of breaking the game.
+RenderBender aims to improve Minecraft RTX's look.
+This is achieved by editing its otherwise inaccessible settings in-memory, meaning that there is little to no risk of breaking the game.
 If you do manage to break something, everything goes back to normal as soon as you restart the game.
 
 Currently, its features are simple: when you start up the program, 
@@ -12,13 +16,13 @@ it **displays the current value of the settings, and lets you edit them**.
 Settings are specified in a JSON file which comes with the executable. It can be customised to your liking. 
 Presets can be created to quickly apply a bunch of values at once.
 
-There are many more features to come, such as
+<s>There are many more features to come, such as
 - Keybinds to toggle presets
 - Dimension-specific presets
 - A preset layer system
 - User-made scripts for custom behaviour (i.e. wet ground during rain)
 
-For all upcoming features, and in what order they will be worked on, see the Roadmap section.
+For all upcoming features, and in what order they will be worked on, see the Roadmap section.</s>
 
 ## Usage
 
@@ -39,15 +43,14 @@ Some more tips:
 
 If you are using a different version however, you'll probably need to edit the static memory offset first.
 ##### Editing the static memory offset
-Go to `File/Preferences` and set the static memory offset for your specific Minecraft version. You can find values for some common versions here.
+Go to `File/Preferences` and set the static memory offset for your specific Minecraft version. <s>You can find values for some common versions here.
 - Release 1.19.20: 0x044B0080
 - Release 1.19.21: 0x044B0FA0
 - Release 1.19.22: 0x044B0F60
 - Release 1.19.30: 0x04875D00
-- Release 1.19.31: 0x04876CA0
+- Release 1.19.31: 0x04876CA0</s>
 
-If your version isn't yet on the list, you'll have check the previously mentioned Discord server. A new value will usually be posted in the #modding-announcements channel shortly after a new release. If you have a Cheat Engine Cheat Table, you can get it from there too, if you know how. 
-If this all sounds rather complicated: we are currently working on a way for RenderBender to detect the static memory offset automatically.
+~~If your version isn't yet on the list~~, you'll have check the previously mentioned Discord server. A new value will usually be posted in the #modding-announcements channel shortly after a new release. If you have a Cheat Engine Cheat Table, you can get it from there too, if you know how. 
 ##### Changing the settings JSON
 Attention: most users will not need to do this, only do it if you know what you're doing.
 
@@ -62,7 +65,9 @@ If you want to use a preset from the #rtx-presets channel of the Minecraft RTX D
 ##### Exporting Cheat Engine presets
 If you want to export a preset in this format, you can click `File/Export CE preset`. After selecting the preset to export, the correct text string will be generated in the textbox below.
 ## Roadmap
+_Please see the note about the state of the project above_
 
+<s>
 These are the planned features for the next few updates. While they are all considered necessary and valuable additions, their order may still change in the future.
 
 ##### 0.4 update
@@ -70,7 +75,7 @@ These are the planned features for the next few updates. While they are all cons
 - Keybinds to toggle presets
 - Interaction between Minecraft and RenderBender via websockets to get access to more options
 
-More features are to come in the more distant future, such as
+~~More features are to come in the more distant future, such as~~
 - Minimize to system tray
 - A layer system for presets
 - User-made scripts for custom behaviour (i.e. wet ground during rain)
@@ -79,7 +84,7 @@ More features are to come in the more distant future, such as
 - Snapping sliders to default and round numbers (toggleable)
 - Setting descriptions and example images
 - Dimension-specific presets
-- Editing radian values as if they were degrees
+- Editing radian values as if they were degrees</s>
 ## Licenses
 
 - This project is built on the Qt graphics library, licensed under the GPL v3 license, available in `QT_LICENSE`.
@@ -101,6 +106,6 @@ And then, after doing a whole bunch of research with Sleepi, I turned it into th
 
 ## Miscellaneous
 - During early development, [this](https://www.youtube.com/watch?v=wiX5LmdD5yk) tutorial by GuidedHacking on YouTube was of great help.
-- If you encounter any bugs or have a suggestion, please contact us in the [Minecraft RTX discord server](https://discord.gg/R56qgBBA9D)  or write an issue.
+- If you encounter any bugs or have a suggestion, please contact us in the [Minecraft RTX discord server](https://discord.gg/R56qgBBA9D)  or write an issue. _Please first see the note about the state of the project above_
 
 **THIS IS NOT AN OFFICIAL MINECRAFT PRODUCT. IT IS NOT APPROVED BY OR ASSOCIATED WITH MOJANG.**
